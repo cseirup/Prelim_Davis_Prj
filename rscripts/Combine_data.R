@@ -40,10 +40,10 @@ BM_trees1 <- BM_trees %>% add_column(Site = 'BM', .before = 'Tr')
 OP_trees1 <- OP_trees %>% add_column(Site = 'OP', .before = 'Tr')
 PM_trees1 <- PM_trees %>% add_column(Site = 'PM', .before = 'Tr')
   #adjust PM Y coordinates over 205m instead of 200m  
-  PM_trees1$Y <- PM_trees1$Y*.97087
+  PM_trees1$Y <- round(PM_trees1$Y*.97087, digits = 2)
 WP_trees1 <- WP_trees %>% add_column(Site = 'WP', .before = 'Tr')  
  #adjust WP Y coordinates over 104m instead of 100m  
-  WP_trees1$Y <- WP_trees1$Y*.96154
+  WP_trees1$Y <- round(WP_trees1$Y*.96154, digits = 2)
 IB_trees1 <- IB_trees %>% select(Tr, TAG, Status, SPP, DBH, X, Y, Crown, Comments) %>%  add_column(Site = 'IB', .before = 'Tr') # remove DS trans column
 BH_trees1 <- BH_trees %>% add_column(Site = 'BH', .before = 'Tr')
 
@@ -78,13 +78,13 @@ Trees3$Tag <- str_pad(Trees3$Tag, 3, side = "left", pad = "0")
 Saps1 <- Saps %>% rename(Transect = Trans, Quadrat = Quad, Species = SPP)
 
 # Remove ibuttons + stump (11 rows)
-table(complete.cases(Trees3$Species))
-Trees4 <- drop_na(Trees3, Species)
-table(complete.cases(Trees4$Species))
+#table(complete.cases(Trees3$Species))
+#Trees4 <- drop_na(Trees3, Species)
+#table(complete.cases(Trees4$Species)) # moved this to QC checks
 table(complete.cases(Saps1$DBH))# Quadrats with no saps are entered as Species = 'NA' and DBH = 'NA'. Could change to NO SPP and leave DBH null?
 
 # Export combined datasets as .csv
-write.csv(Trees3, "C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_trees_20211101.csv")
-write.csv(Saps1, "C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_saps_20211101.csv") # Saplings not transformed to interpret spatial info included in transect and quadrat number. Remember that WP plot layout is diff
+write.csv(Trees3, "C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_trees_20211116.csv", row.names = FALSE)
+write.csv(Saps1, "C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_saps_20211116.csv", row.names = FALSE) # Saplings not transformed to interpret spatial info included in transect and quadrat number. Remember that WP plot layout is diff
 
 
