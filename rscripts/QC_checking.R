@@ -2,14 +2,20 @@
 
 library(tidyverse)
 library(forestMIDN)
+library(readxl)
 
 setwd('C:/01_NETN/Forest_Health/R_Dev/Prelim_Davis_Prj')
 
 # Load data ---------------------------------------------------------------
-saps <- read.csv("../Davis_data/Davis_saps_20211116.csv")
-trees <- read.csv("../Davis_data/Davis_trees_20211116.csv")
-#still to check: CWD, Soil depth data, Quad Data, Quadrat Species, Seedlings, ibutton, digitized davis data
-
+saps <- read.csv("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_saps_20211116.csv")
+trees <- read.csv("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_trees_20211116.csv")
+seeds <- read_excel("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_quad_seeding_data_20210814.xlsx")
+qd_sp <- read_excel("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_quad_species_data_20210814.xlsx")
+qd_ch <- read_excel("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_quad_character_data_20210814.xlsx")
+soil <- read_excel("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_soil_depth_data_20210808.xlsx")
+ibutton_d <- read.csv("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/ibutton_dat_daily_2021-06-29.csv")
+ibutton_m <- read.csv("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/ibutton_dat_monthly_2021-06-29.csv")
+#still to check: CWD, ibutton, digitized davis data
 
 # QC checks for tree data -------------------------------------------------
 #Site
@@ -116,4 +122,74 @@ DBHs_plot2
 
 write.csv(saps, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_saps_QC.csv", row.names = FALSE)
 
+# QC checks for seedlings -------------------------------------------------
+#Site
+names(seeds)
+unique(seeds$Site) # 7 site codes
 
+#Date
+unique(seeds$Date)
+
+#Quad
+unique(seeds$Quad)
+table(seeds$Quad)
+
+#Latin_Name
+unique(seeds$Latin_name)
+
+#15-30cm
+table(seeds$`15-30cm`)# confirmed outliers (25 and 27) are correct
+
+#30-100cm
+table(seeds$`30-100cm`)# confirmed outlier (15) is correct
+
+#1-1.5m
+table(seeds$`1-1.5m`)
+
+#>1.5m
+table(seeds$`>1.5m`)
+
+#Saps >1cm, ≤2.5 cm
+table(seeds$'Saps >1cm, ≤2.5 cm')
+
+table(complete.cases(seeds))# no na's
+write.csv(seeds, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_seedings_QC.csv", row.names = FALSE)
+
+# QC checks for quad species data -----------------------------------------
+#Site
+names(qd_sp)
+unique(qd_sp$Site) # 7 site codes
+
+#Date
+unique(qd_sp$Date)
+
+#Latin_Name
+unique(qd_sp$Latin_name)
+
+#Cover data 
+qd_sp %>% map(table) #iterate table() over all columns, prints output for each in the console
+
+table(complete.cases(qd_sp))# no na's
+write.csv(qd_sp, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_species_QC.csv", row.names = FALSE)
+# QC checks for quad character data ---------------------------------------
+qd_ch %>% map(table) #iterate table() over all columns, prints output for each in the console
+
+table(complete.cases(qd_ch))# no na's
+write.csv(qd_ch, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_character_QC.csv", row.names = FALSE)
+# Soil Depth --------------------------------------------------------------
+names(soil)
+soil1 <- soil %>% rename(Depth = `Soil Depth (cm)`) %>% select(-Notes)
+
+soil1 %>% map(table)# IB has a depth of 100+, changing to 100 cm so numeric
+soil1$Depth <- recode(soil1$Depth, '100+' = "100")
+
+str(soil1)
+soil1$Depth <- as.numeric(soil1$Depth)
+
+depth_plot <- ggplot(soil1, aes(x = Site, y = Depth))+
+                  geom_boxplot()
+            
+depth_plot
+
+table(complete.cases(soil1))# no na's
+write.csv(soil1, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_soil_depth_QC.csv", row.names = FALSE)
