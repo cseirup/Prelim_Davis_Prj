@@ -68,7 +68,7 @@ Ltreesap_ba_wide4 <- Ltreesap_ba_wide2 %>% select(-c(ACPE_prop, AMELANCHIER_prop
 BA_comp_NMDS1 <- metaMDS(Ltreesap_ba_wide2)
 BA_comp_NMDS2 <- metaMDS(Ltreesap_ba_wide4)#removed rare species
 plot(BA_comp_NMDS1)
-plot(BA_comp_NMDS2)
+plot(BA_comp_NMDS2) #stress is nearly 0, may insufficient data?
 #ordiplot(BA_comp_NMDS, type = "text")
 orditorp(BA_comp_NMDS2, display = "sites")
 #orditorp(BA_comp_NMDS, display = "species")
