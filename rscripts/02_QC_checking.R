@@ -15,7 +15,8 @@ qd_ch <- read_excel("C:/Users/cseirup/Documents/Personal/grad school/Davis proje
 soil <- read_excel("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/Davis_soil_depth_data_20210808.xlsx")
 ibutton_d <- read.csv("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/ibutton_dat_daily_2021-06-29.csv")
 ibutton_m <- read.csv("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/ibutton_dat_monthly_2021-06-29.csv")
-#still to check: CWD, ibutton, digitized davis data
+trees_59<- read_excel("C:/Users/cseirup/Documents/Personal/grad school/Davis project/data/1959_trees_20210409.xlsx")
+#still to check: CWD, ibutton, digitized davis data (trees done)
 
 # QC checks for tree data -------------------------------------------------
 #Site
@@ -176,7 +177,7 @@ qd_ch %>% map(table) #iterate table() over all columns, prints output for each i
 
 table(complete.cases(qd_ch))# no na's
 write.csv(qd_ch, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_character_QC.csv", row.names = FALSE)
-# Soil Depth --------------------------------------------------------------
+# QC checks for Soil Depth --------------------------------------------------------------
 names(soil)
 soil1 <- soil %>% rename(Depth = `Soil Depth (cm)`) %>% select(-Notes)
 
@@ -193,3 +194,13 @@ depth_plot
 
 table(complete.cases(soil1))# no na's
 write.csv(soil1, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_soil_depth_QC.csv", row.names = FALSE)
+
+
+# QC checks for 1959 tree data --------------------------------------------
+#Cover data 
+trees_59 %>% map(table) #iterate table() over all columns, prints output for each in the console
+
+table(complete.cases(trees_59))# no na's
+write.csv(trees_59, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_trees_1959_QC.csv", row.names = FALSE)
+# QC checks for quad character data ---------------------------------------
+

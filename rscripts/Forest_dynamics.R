@@ -1,20 +1,27 @@
 # Code for calculating various forest dynamics metrics
-#katemmiller/forestNETNarch
-library(tidyverse)
-library(forestMIDNarch)
-library(scales)
+install.packages(c("scales"))
+devtools::install_github("katemmiller/forestMIDN")
 
+library(tidyverse)
+library(forestMIDN)
+library(scales)
+library(lme4)
+library(nlme)
+library(lmerTest)
 # Load data ---------------------------------------------------------------
 
-saps <- read.csv("../data/Davis_saps_20200825.csv")
-trees <- read.csv("../data/Davis_trees_20200825.csv")
-CWD <- readxl::read_xlsx("../data/CWD_data.xlsx")
-trees59 <- readxl::read_xlsx("../data/1959_trees_20210409.xlsx")
+QC_data_folder = "C:/01_NETN/Forest_Health/R_Dev/Davis_data" #location of QC'd datafiles
+files_list <- list.files(path = QC_data_folder, pattern="*.csv", full.names=TRUE) #read names of data files in folder
+files_list # review list in order to choose nicknames
+nicknames <- c("qd_ch", "seeds", "qd_sp", "saps", "soil_d", "trees59", "trees", "mapped_ibuttons")#preferred names for each df
+data <- files_list %>% map(read.csv) %>% set_names(nm = nicknames) #load datafiles into a list and rename with nicknames
+list2env(data, envir = .GlobalEnv)
 
-# 2020 diameter distributions NETN comparion)--------------------------------------------------
+# 2020/2021 diameter distributions NETN comparion)--------------------------------------------------
   #treesL <- filter(trees, Status == "L") %>% droplevels() #should do live and dead separately later
   #treesD <- filter(trees, Status == "D") %>% droplevels()
 
+#Diameter distributions
 trees_df1 <- trees #all trees
 trees_df1$BA_cm2 <- round(pi * ((trees_df1$DBH/2)^2), 4)
 trees_df2 <- trees_df1 %>% mutate(size_class = as.factor(case_when(between(DBH, 
@@ -56,7 +63,7 @@ levels(trees_dist_sum$size_class) #Size classes are in the order we want them no
 trees_dist_sum <- trees_dist_sum %>% arrange(Site, size_class)
 head(trees_dist_sum)
 # Set up labels for facet wrap
-site_names <- c('BC' = 'Blackwoods', 'BM' = 'Beech Mtn', 'OP' = 'Otter Point', 'PM' = "Pemetic Mtn")
+site_names <- c('BC' = 'Blackwoods', 'BM' = 'Beech Mtn', 'OP' = 'Otter Point', 'PM' = "Pemetic Mtn", 'BH' = 'Bass Harbor Head', 'IB' = 'Ironbound Is', 'WP' = 'Western Mtn Plot')
 
 # Make ggplot graph
 trees_dist_plot <- ggplot(data = trees_dist_sum, aes(x = size_class, y = avg_dens))+
@@ -504,3 +511,24 @@ Combo_sum_plot <- ggplot(data = Combo_sum2, aes(x = Species, y = carbonmass_mgha
 print(Combo_sum_plot)
 ggsave("./figures/Combo_sum_plot_carbonmass_mgha2.jpg", Combo_sum_plot, dpi = 300, 
        width = 7, height = 4, units = 'in')
+
+
+# Fitting a line to the diameter distributions ----------------------------
+
+
+site_names <- c('BC' = 'Blackwoods', 'BM' = 'Beech Mtn', 'OP' = 'Otter Point', 
+                'PM' = "Pemetic Mtn", 'BH' = 'Bass Harbor Head', 
+                'IB' = 'Ironbound Is', 'WP' = 'Western Mtn Plot')
+
+ggplot(trees,aes(x=DBH))+
+  geom_histogram(binwidth=5)+
+  geom_density(aes(y=5*..count..), col = "red")+
+  facet_wrap(~Site, ncol = 3, labeller = as_labeller(site_names))+
+  theme_FVM()
+
+#base R
+hist(trees$DBH, probability = TRUE)
+lines(density(trees$DBH, cut = 10), col = "Red", lwd = 2)
+lines(density(trees$DBH, adjust = 2, cut = 10), col = "Blue", lwd = 2)
+
+
