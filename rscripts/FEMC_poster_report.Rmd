@@ -1,0 +1,60 @@
+---
+title: "FEMC figures and tables"
+author: "Camilla Seirup"
+date: "11/23/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.kable.NA = '')
+```
+
+```{r import, include = FALSE, cache = FALSE}
+#do I need to load data here if it's in the compile script?
+```
+
+```{r deps, include = FALSE}
+library(tidyverse)
+library(forestMIDN)
+library(htmltools)
+library(knitr)
+library(kableExtra)
+```
+
+```{r compile_data, include = FALSE}
+source("FEMC_poster_compile.R")
+```
+
+## Figures
+
+Figures for FEMC conference poster.
+
+
+```{r, echo=FALSE, warning=FALSE}
+print(Ltreesap_DBH_plot)
+```
+
+Figure 1. Stem density distributions from the 2020/ 2021 revisits of six spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
+
+
+
+```{r, echo=FALSE, warning=FALSE}
+print(tree59_DBH_plot)
+```
+
+Figure 2. Stem density distributions from the 1959 sampling of six spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
+
+```{r pressure, echo=FALSE, warning=FALSE}
+print(Comp_tree_dist_plot)
+```
+
+Figure 3.
+
+
+
+
+
+## Tables
+
+</div>
