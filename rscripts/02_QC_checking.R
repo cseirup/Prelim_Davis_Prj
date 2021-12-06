@@ -89,7 +89,16 @@ cXcY_plot <- ggplot(trees2, aes(x=cX, y=cY))+
   theme_FVM()
 cXcY_plot #looks good
 
-write.csv(trees2, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_trees_QC.csv", row.names = FALSE)
+#adding year, sample event, number of subplots, and subplot area to data
+s2020 <- c("OP", "BM", "BC", "PM") # 4 sites sampled in 2020
+s2021 <- c("IB", "WP", "BH") # 3 sites sampled in 2021
+
+trees3 <- trees2 %>% mutate(SampleYear = case_when(Site %in% s2020 ~ paste0(2020),
+                                                   Site %in% s2021 ~ paste0(2021))) %>% 
+                     mutate(SampleEventNum = 2) 
+                     
+
+write.csv(trees3, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_trees_QC.csv", row.names = FALSE)
 
 # QC checks for sapling data ----------------------------------------------
 #Site
@@ -121,7 +130,11 @@ DBHs_plot2 <- ggplot(saps, aes(x = Site, y = DBH))+
   geom_boxplot()
 DBHs_plot2
 
-write.csv(saps, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_saps_QC.csv", row.names = FALSE)
+saps2 <- saps %>% mutate(SampleYear = case_when(Site %in% s2020 ~ paste0(2020),
+                                                   Site %in% s2021 ~ paste0(2021))) %>% 
+                  mutate(SampleEventNum = 2) 
+
+write.csv(saps2, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_saps_QC.csv", row.names = FALSE)
 
 # QC checks for seedlings -------------------------------------------------
 #Site
@@ -154,7 +167,11 @@ table(seeds$`>1.5m`)
 table(seeds$'Saps >1cm, ≤2.5 cm')
 
 table(complete.cases(seeds))# no na's
-write.csv(seeds, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_seedings_QC.csv", row.names = FALSE)
+
+seeds2 <- seeds %>% mutate(SampleYear = 2021) %>% 
+                    mutate(SampleEventNum = 2) 
+
+write.csv(seeds2, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_seedings_QC.csv", row.names = FALSE)
 
 # QC checks for quad species data -----------------------------------------
 #Site
@@ -171,12 +188,18 @@ unique(qd_sp$Latin_name)
 qd_sp %>% map(table) #iterate table() over all columns, prints output for each in the console
 
 table(complete.cases(qd_sp))# no na's
-write.csv(qd_sp, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_species_QC.csv", row.names = FALSE)
+qd_sp2 <- qd_sp %>% mutate(SampleYear = 2021) %>% 
+  mutate(SampleEventNum = 2) 
+
+write.csv(qd_sp2, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_species_QC.csv", row.names = FALSE)
 # QC checks for quad character data ---------------------------------------
 qd_ch %>% map(table) #iterate table() over all columns, prints output for each in the console
 
 table(complete.cases(qd_ch))# no na's
-write.csv(qd_ch, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_character_QC.csv", row.names = FALSE)
+qd_ch2 <- qd_ch %>% mutate(SampleYear = 2021) %>% 
+  mutate(SampleEventNum = 2) 
+
+write.csv(qd_ch2, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_quad_character_QC.csv", row.names = FALSE)
 # QC checks for Soil Depth --------------------------------------------------------------
 names(soil)
 soil1 <- soil %>% rename(Depth = `Soil Depth (cm)`) %>% select(-Notes)
@@ -195,12 +218,15 @@ depth_plot
 table(complete.cases(soil1))# no na's
 write.csv(soil1, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_soil_depth_QC.csv", row.names = FALSE)
 
-
 # QC checks for 1959 tree data --------------------------------------------
 #Cover data 
 trees_59 %>% map(table) #iterate table() over all columns, prints output for each in the console
 
 table(complete.cases(trees_59))# no na's
-write.csv(trees_59, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_trees_1959_QC.csv", row.names = FALSE)
+
+trees_592 <- trees_59 %>% mutate(SampleYear = 1959) %>% 
+  mutate(SampleEventNum = 1) 
+
+write.csv(trees_592, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_trees_1959_QC.csv", row.names = FALSE)
 # QC checks for quad character data ---------------------------------------
 

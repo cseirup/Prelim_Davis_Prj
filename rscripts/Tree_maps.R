@@ -3,14 +3,14 @@
 # Load packages -----------------------------------------------------------
 
 library(tidyverse)
-library(forestMIDN)
+library(forestMIDNarch)
 
 # Load data ---------------------------------------------------------------
 
-saps <- read.csv("../data/Davis_saps_20200825.csv")
-trees <- read.csv("../data/Davis_trees_20200825.csv")
-gr <- readxl::read_xlsx("../data/Davis_growth_releases.xlsx")
-CWD <- readxl::read_xlsx("../data/CWD_data.xlsx")
+saps <- read.csv("../Davis_data/Davis_saps_20211101.csv")
+trees <- read.csv("../Davis_data/Davis_trees_20211101.csv")
+#gr <- readxl::read_xlsx("../data/Davis_growth_releases.xlsx")
+#CWD <- readxl::read_xlsx("../data/CWD_data.xlsx")
 
 # Plotting ----------------------------------------------------------------
 as.factor(trees$Site)
