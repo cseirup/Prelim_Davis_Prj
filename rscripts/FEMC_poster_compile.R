@@ -293,23 +293,25 @@ SumTable$comp <- mapply(compmass,Species=SumTable$Species, DBH = SumTable$DBH_QM
 SumTable$carbon <- mapply(compcarb,Species=SumTable$Species, biomass = SumTable$comp)
 
 names(SumTable)
+#summing metrics by site and calculating total carbon and biomass for 1959 plots by * by number of stems per site
 SumTable_site <- SumTable %>% select(-c(NumSubplots, SubplotArea, Module, Species, size_class, DBH_QMD)) %>% 
                                  group_by(Site, SampleEventNum) %>% 
                                  summarise(SampleYear = first(SampleYear),
                                            SiteName = first(SiteName),
                                            sum_stems = sum(num_stem),
                                            sum_BA_cm2 = sum(BA_cm2),
-                                           sum_carb = sum(carbon),
-                                           sum_comp = sum(comp),
+                                           sum_carb = sum(carbon*num_stem),
+                                           sum_comp = sum(comp*num_stem),
                                            TotArea = first(TotArea)) 
 
+#converting from plot to ha and kg to megagram 
 SumTable_ha <- SumTable_site %>%  mutate(num_stems_ha = sum_stems * (10000/TotArea), 
                                          BA_m2ha = sum_BA_cm2/TotArea,
                                          carbonmass_Mgha = (sum_carb * (10000/TotArea))/1000, 
                                          biomass_Mgha = (sum_comp * (10000/TotArea))/1000) %>% 
                                   mutate(across(where(is.numeric), round, 0)) %>% 
                                   select(Site, SiteName, SampleEventNum, 
-                                         num_stems_ha, BA_m2ha, biomass_Mgha, carbonmass_Mgha) #converting from plot to ha and kg to megagram 
+                                         num_stems_ha, BA_m2ha, biomass_Mgha, carbonmass_Mgha) 
 
 SumTable_ha$SampleEventNum <- as.character(SumTable_ha$SampleEventNum)
 
