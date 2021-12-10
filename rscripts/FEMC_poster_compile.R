@@ -29,19 +29,24 @@ sp_names <- c('PIRU' = 'Picea rubens', 'PIGL' = 'Picea glauca', 'TSCA' = 'Tsuga 
               'BECO' = 'Betula cordifolia', 'ACPE' = 'Acer pensylvanicum', 'AMELANCHIER' = 'Amelanchier spp')
 
 # Stem map ----------------------------------------------------------------
-#Only one site
-stem_mapV <- trees %>% filter(Site == 'BM') %>% 
+trees$Site <- ordered(trees$Site,
+                                levels = c("BM", "PM", "BC",  "OP", "BH","IB", "WP"))
+
+stem_mapV <- trees %>% filter(Site != 'WP') %>% 
   ggplot(aes(x = cY, y = cX))+
+  geom_hline(yintercept = 5, linetype = 2)+
+  geom_vline(xintercept = 100, linetype = 2)+ 
   geom_point(aes(color = Status, size = DBH))+
   #coord_equal()+# makes x and y the same scale
   scale_color_manual(name = "Status", labels = c("Dead", "Live"), 
-                       values = c("D" = '#808080', "L" = '#228B22'))+
-  scale_size_continuous(range = c(1, 5))+
-  facet_wrap(~Site, ncol = 1, labeller = as_labeller(site_names))+
+                       values = c("D" = '#808080', "L" = '#31a354'))+
+  scale_size_continuous(range = c(.5, 3.5))+
+  facet_wrap(~Site, ncol = 6, labeller = as_labeller(site_names))+
   labs(x = "Easting (meters)", y = "Northing (meters)")+ 
-  theme(axis.text = element_text(size = 12), 
-        strip.text = element_text(size = 16), #facet wrap text size
-        axis.title = element_text(size = 16),
+  theme(axis.text = element_text(size = 10), 
+        strip.text = element_text(size = 10), #facet wrap text size
+        axis.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
         axis.text.x = element_text(angle = 45, hjust = 1),
         axis.line = element_line(color = "#696969", size = 0.01),
         axis.ticks = element_line(color = "#696969", size = 0.5),
@@ -49,10 +54,9 @@ stem_mapV <- trees %>% filter(Site == 'BM') %>%
         panel.background = element_blank(),
         strip.background = element_blank(),
         axis.title.y = element_text(margin = margin(r = 5)),
-        aspect.ratio = 10/3)+
-  geom_hline(yintercept = 5, linetype = 2)+
-  geom_vline(xintercept = 100, linetype = 2)+
-  #geom_text(aes(label=Tag), size = 3)+ #add tag # labels
+        aspect.ratio = 10/3,
+        legend.position = "right")+
+  
   coord_flip()+
   theme_FVM()
 stem_mapV
@@ -62,13 +66,14 @@ stem_mapH <- trees %>% filter(Site == 'BM') %>%
   geom_point(aes(color = Status, size = DBH))+
   #coord_equal()+# makes x and y the same scale
   scale_color_manual(name = "Status", labels = c("Dead", "Live"), 
-                     values = c("D" = '#808080', "L" = '#228B22'))+
+                     values = c("D" = '#808080', "L" = '#31a354'))+
   scale_size_continuous(range = c(1, 5))+
   facet_wrap(~Site, ncol = 1, labeller = as_labeller(site_names))+
   labs(x = "Easting (meters)", y = "Northing (meters)")+ 
-  theme(axis.text = element_text(size = 12), 
-        strip.text = element_text(size = 16), #facet wrap text size
-        axis.title = element_text(size = 16),
+  theme(axis.text = element_text(size = 10), 
+        strip.text = element_text(size = 10), #facet wrap text size
+        axis.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
         axis.text.x = element_text(angle = 45, hjust = 1),
         axis.line = element_line(color = "#696969", size = 0.01),
         axis.ticks = element_line(color = "#696969", size = 0.5),
@@ -189,18 +194,20 @@ Comp_tree_dist_plot <- ggplot(data = tree_dist_ha, aes(color = SampleEventNum, x
   geom_line(aes(group = SampleEventNum), size = 2)+
   facet_wrap(~Site, ncol = 4, labeller = as_labeller(site_names))+
   labs(x = "Tree Diameter Class (cm)", y = "stems/ha")+ 
-  theme(axis.text = element_text(size = 10), # change axis label size
-        strip.text = element_text(size = 14), # change facet text size
-        axis.title = element_text(size = 16), # change axis title size
+  theme(axis.text = element_text(size = 9), # change axis label size
+        strip.text = element_text(size = 10), # change facet text size
+        axis.title = element_text(size = 12), # change axis title size
         axis.text.x = element_text(angle = 60, hjust = 1),
         axis.title.y = element_text(margin = margin(r = 5)),
         legend.text = element_text(size = 12),
-        legend.title = element_text(size = 16))+
+        legend.title = element_text(size = 12),
+        legend.position = c(1,0),
+        legend.justification = c(1,0))+
   scale_color_manual(name = "Year", labels = c("1" = '1959', "2" = '2020/21'), 
-                     values = c("1" = '#6DA346', "2" = '#228B22'))+
-  scale_x_discrete(labels= c('2.5 \U2013 10','10 \U2013 20',
-                             '20 \U2013 30','30 \U2013 40','40 \U2013 50',
-                             '50 \U2013 60','60 \U2013 70','70+'))+ 
+                     values = c("1" = '#a1d99b', "2" = '#31a354'))+
+  scale_x_discrete(labels= c('2.5-10','10-20',
+                             '20-30','30-40','40-50',
+                             '50-60','60-70','70+'))+ 
   theme_FVM() 
     
 Comp_tree_dist_plot  
@@ -210,14 +217,16 @@ Comp_tree_dist_bar <- ggplot(data = tree_dist_ha, aes(x = size_class, y = num_st
   geom_bar(width = .75, position = position_dodge(), stat = 'identity')+
   facet_wrap(~Site, ncol = 4, labeller = as_labeller(site_names))+
   labs(x = "Tree Diameter Class (cm)", y = "stems/ha")+ 
-  theme(axis.text = element_text(size = 10), # change axis label size
-        strip.text = element_text(size = 14), # change facet text size
-        axis.title = element_text(size = 16), # change axis title size
+  theme(axis.text = element_text(size = 9), # change axis label size
+        strip.text = element_text(size = 10), # change facet text size
+        axis.title = element_text(size = 12), # change axis title size
         axis.text.x = element_text(angle = 60, hjust = 1),
         axis.title.y = element_text(margin = margin(r = 5)),
         legend.text = element_text(size = 12),
-        legend.title = element_text(size = 16))+
-  scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020/21'), values = c("1" = '#6DA346', "2" = '#228B22'))+
+        legend.title = element_text(size = 12),
+        legend.position = c(1,0),
+        legend.justification = c(1,0))+
+  scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020/21'), values = c("1" = '#a1d99b', "2" = '#31a354'))+
   scale_x_discrete(labels= c('2.5 \U2013 10','10 \U2013 20',
                              '20 \U2013 30','30 \U2013 40','40 \U2013 50',
                              '50 \U2013 60','60 \U2013 70','70+'))+ 
@@ -353,44 +362,55 @@ Comb_sp4 <- tree_sp_ha %>% ungroup() %>%
                            filter(Species %in% top_four)# only top four species
 
 unique(Comb_sp4$Species)
+Comb_sp4$Species <- ordered(Comb_sp4$Species,
+                         levels = c("PIRU", "PIGL", "ABBA", "TSCA"))
+levels(Comb_sp4$Site)#Sites are in the ordered by complexity now
+
 
 Comb_sp4$Site <- ordered(Comb_sp4$Site,
                                 levels = c("BM", "PM", "BC",  "OP", "BH","IB", "WP"))
 levels(Comb_sp4$Site)#Sites are in the ordered by complexity now
 
+
+
 Comb_sp_plot <- ggplot(data = Comb_sp4, aes(color = Species, x = SampleEventNum, y = BA_m2ha))+
-  geom_point()+ 
-  geom_line(aes(group = Species), size = .5)+
+  geom_point(size = 1)+ 
+  geom_line(aes(group = Species), size = .75)+
   facet_wrap(~Site, ncol = 4, labeller = as_labeller(site_names))+
   xlab('Sample Year')+
   ylab(bquote('Basal area ('~m^2*'/ha)'))+ 
-  theme(axis.text = element_text(size = 10), # change axis label size
-        strip.text = element_text(size = 14), # change facet text size
-        axis.title = element_text(size = 16), # change axis title size
-        axis.text.x = element_text(angle = 60, hjust = 1),
+  theme(axis.text = element_text(size = 9), # change axis label size
+        strip.text = element_text(size = 10), # change facet text size
+        axis.title = element_text(size = 12), # change axis title size
+        #axis.text.x = element_text(angle = 45, hjust = 1),
         axis.title.y = element_text(margin = margin(r = 5)),
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 16))+
-  scale_x_discrete(labels= c("1" = '1959', "2" = '2020/21'))+ 
+        legend.text = element_text(size = 10, face = "italic"),
+        legend.title = element_text(size = 10),
+        legend.position = c(1,0),
+        legend.justification = c(1,0))+
+  scale_x_discrete(labels= c("1" = '1959', "2" = '2020/21'))+
+  scale_color_manual(name = "Species", labels = c(sp_names), 
+                     values = c('#2c7bb6', '#abd9e9','#fdae61', '#d7191c'))+
   theme_FVM() 
 
 Comb_sp_plot
 
 #Alternate visualizations
-#Dumbell plot
 
+#Dumbell plot
 #added 0 record for OP PIGL so the change is more obvious
 dumbbell <- Comb_sp4 %>% 
   ggplot(aes(x= BA_m2ha, y= reorder(Species, BA_m2ha))) +
   geom_line(aes(group = Species))+
   geom_point(aes(color=SampleEventNum), size=4) +
-  theme(legend.position="bottom")+
+  theme(legend.position="right",
+        axis.text.y = element_text(face="italic"))+
   facet_wrap(~Site, ncol = 2, labeller = as_labeller(site_names))+
   xlab(bquote('Basal area ('~m^2*'/ha)'))+
   ylab('Species')+ 
   scale_y_discrete(labels = sp_names)+
   scale_color_manual(name = "Year", labels = c("1" = '1959', "2" = '2020/21'), 
-                     values = c("1" = '#6DA346', "2" = '#228B22'))+
+                     values = c("1" = '#a1d99b', "2" = '#31a354'))+
   theme_FVM()
 dumbbell
 
@@ -399,18 +419,18 @@ dumbbell
 st_bar <- ggplot(Comb_sp4, aes(fill=SampleEventNum, x=reorder(Species, BA_m2ha), y=BA_m2ha))+
   geom_bar(position = "dodge", stat = "identity")+
   theme(legend.position="bottom")+
-  theme(axis.text = element_text(size = 10), # change axis label size
-        strip.text = element_text(size = 14), # change facet text size
-        axis.title = element_text(size = 16), # change axis title size
+  theme(axis.text = element_text(size = 9), # change axis label size
+        strip.text = element_text(size = 10), # change facet text size
+        axis.title = element_text(size = 12), # change axis title size
         axis.text.x = element_text(angle = 60, hjust = 1),
         axis.title.y = element_text(margin = margin(r = 5)),
         legend.text = element_text(size = 12),
-        legend.title = element_text(size = 16))+
+        legend.title = element_text(size = 12))+
   facet_wrap(~Site, ncol = 4, labeller = as_labeller(site_names))+
   xlab('Species')+
   ylab(bquote('Basal area ('~m^2*'/ha)'))+ 
   scale_x_discrete(labels = sp_names)+
   scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020/21'), 
-                     values = c("1" = '#6DA346', "2" = '#228B22'))+
+                     values = c("1" = '#a1d99b', "2" = '#31a354'))+
   theme_FVM()
 st_bar
