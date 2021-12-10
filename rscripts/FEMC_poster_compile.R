@@ -110,9 +110,9 @@ Ltreesap2 <- Ltreesap %>% mutate(size_class = as.factor(case_when(between(DBH, 2
                                                                   DBH >= 70 ~ "d70", TRUE ~ "unknown")), num_stem = 1)
 
 # Calculating Quadratic Mean Diameter -------------------------------------------------
-#Calculating the QMD for each size class and species using the 2020 diameters, should be better than the mid-point of each size class
-#
-qmd1 <- Ltreesap2 %>% group_by(Species, size_class) %>% summarise(QMD = (sum(DBH^2)),
+#Calculating the QMD for each size class using the 2020 diameters, should be better than the mid-point of each size class. 
+#Earlier version was by Species and size class
+qmd1 <- Ltreesap2 %>% group_by(size_class) %>% summarise(QMD = (sum(DBH^2)),
                                                                   avg_dbh = mean(DBH, na.rm = TRUE),
                                                                   se_dens = sd(DBH, na.rm = TRUE)/
                                                                     sqrt(sum(!is.na(DBH))),
@@ -125,7 +125,7 @@ trees59b <- trees59 #combine two smallest size classes to be more consistent wit
 trees59b$size_class <- trees59b$size_class %>% recode(d2.5_4.9 = "d2.5_9.9") %>% 
                                                recode(d5_9.9 = "d2.5_9.9")
 
-trees59qmd <- left_join(trees59b, qmd2, by = c("Species", "size_class"))
+trees59qmd <- left_join(trees59b, qmd2, by = c("size_class"))
 
 midpoints <- data.frame("size_class" = c("d2.5_9.9", "d10_19.9", 
                                          "d20_29.9", "d30_39.9", "d40_49.9", 
