@@ -9,13 +9,13 @@ library(vegan)
 library(ggvegan)
 library(readxl)
 library(ggrepel)
-library(Rcpp)
+#library(Rcpp)
 # Load data ---------------------------------------------------------------
 
 QC_data_folder = "C:/01_NETN/Forest_Health/R_Dev/Davis_data" #location of QC'd datafiles
 files_list <- list.files(path = QC_data_folder, pattern="*.csv", full.names=TRUE) #read names of data files in folder
 files_list # review list in order to choose nicknames
-nicknames <- c("cwd", "qd_ch", "seeds", "qd_sp", "saps", "soil_d", "trees59", "trees59_calc", "trees", "mapped_ibuttons")#preferred names for each df
+nicknames <- c("cwd", "events", "qd_ch", "seeds", "qd_sp", "saps", "soil_d", "trees59", "trees59qmd", "trees", "mapped_ibuttons")#preferred names for each df
 data <- files_list %>% map(read.csv) %>% set_names(nm = nicknames) #load datafiles into a list and rename with nicknames
 list2env(data, envir = .GlobalEnv)
 
@@ -56,7 +56,7 @@ Ltreesap_ha <- Ltreesap2 %>% group_by(Site, Species) %>%
                                                         IB = "IB20"))
 
 #setting up 1959 tree data
-trees59_ha <- trees59_calc %>% group_by(Site, Species) %>% 
+trees59_ha <- trees59qmd %>% group_by(Site, Species) %>% 
                                summarise(num_stems_ha = sum(num_stem) * 20, BA_m2ha = sum(BA_cm2)/500) %>%
                                mutate(Site = recode(Site, BC = "BC59", BH = "BH59", BM = "BM59", 
                                                           OP = "OP59", PM = "PM59", WP = "WP59",
@@ -110,8 +110,8 @@ plot(BA_comp_NMDS2)
 orditorp(BA_comp_NMDS2, display = "sites")
 #orditorp(BA_comp_NMDS, display = "species")
 
-#using ggvegan plotting
-NMDS2_gg<- fortify(BA_comp_NMDS2)
+#using ggvegan package + ggplot to get a decent plot
+NMDS2_gg<- fortify(BA_comp_NMDS2) #transforms ordination results form ggplot can use
 names(NMDS2_gg)
 NMDS2_gg2<- NMDS2_gg %>% filter(Score == "sites") 
 
@@ -121,5 +121,16 @@ ord_plot <- NMDS2_gg2 %>%  ggplot(aes(x=NMDS1, y=NMDS2, label=Label))+
                      geom_text()+
                      theme_FVM()
 ord_plot
-                   
+
+#ggrepel package for optimizing labels
+options(ggrepel.max.overlaps = Inf)#Prints all labels even if overlap
+
+ord_plot2 <- NMDS2_gg2 %>% ggplot(aes(x=NMDS1, y=NMDS2, label=Label))+
+                             geom_point()+
+                             coord_cartesian(clip = "off") +
+                             geom_text_repel(xlim = c(-Inf, NA),
+                                             ylim = c(-Inf, Inf))+ #labels can overlap plot borders
+                             theme_FVM()
+
+ord_plot2
                 
