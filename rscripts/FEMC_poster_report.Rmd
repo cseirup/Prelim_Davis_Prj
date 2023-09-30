@@ -1,0 +1,97 @@
+---
+title: "FEMC figures and tables"
+author: "Camilla Seirup"
+date: "12/03/2021"
+always_allow_html: TRUE
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.kable.NA = '')
+```
+
+```{r import, include = FALSE, cache = FALSE}
+#do I need to load data here if it's in the compile script?
+```
+
+```{r deps, include = FALSE}
+library(tidyverse)
+library(forestMIDN)
+library(htmltools)
+library(knitr)
+library(kableExtra)
+library(ggalt)
+```
+
+```{r compile_data, include = FALSE}
+source("FEMC_poster_compile.R")
+```
+
+## Figures
+
+```{r, echo=FALSE, warning=FALSE, out.height="100%", fig.height = 4.5, fig.width = 7.5}
+print(Comp_tree_dist_plot)
+```
+
+Figure 1(1). Stem density distributions from the 1959 sampling (red) and 2020/21 resampling of six spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
+
+```{r, echo=FALSE, warning=FALSE}
+print(Comp_tree_dist_bar)
+```
+
+Figure 1(2). Stem density distributions from the 1959 sampling (red) and 2020/21 resampling of six spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
+
+```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
+print(Comb_sp_plot)
+```
+
+Figure 4. Change in species composition option 1. All live trees >2.5 cm DBH included. I don't like how many colors there are (already removed SODE, PRPE, ACSP, and ACER sp). This type of plot would be more effective is I only showed the top most abundant species.
+
+```{r, echo=FALSE, out.height="100%", fig.height = 8}
+print(dumbbell)
+```
+
+Figure 5. Change in species composition option 2. All live trees >2.5 cm DBH included. Removed SODE, PRPE, ACSP, and ACER sp. could reduce to the top 10 species. Red dots show the basal area in m$^2$/ha in 1959; blue dots show basal area in 2020 or 2021. The distance between the points indicates the change in abundance between the two sampling events. 
+
+```{r, echo=FALSE, out.height="100%", fig.height = 9}
+print(st_bar)
+```
+
+Figure 6. Change in species composition option 3. All live trees >2.5 cm DBH included. Only showing top 7 species. Is this easier to read than Fig. 5?
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(stem_mapV)
+```
+
+Figure 7. Stem map vertical option: I'll probably only include one site.
+
+```{r, echo=FALSE, out.height="100%", fig.width = 12}
+print(stem_mapH)
+```
+
+Figure 8. Stem map horizontal option: I'll probably only include one site.
+
+## Tables
+
+Table 1. Density, basal area, biomass, and carbon mass calculated for each site and sampling event. All live trees > 10cm were included. Biomass is an estimate of above ground biomass.  Plot size for 1959 sample was 500 m$^2$. Plot size in 2020/21 was 2000 m$^2$.
+
+```{r, echo=FALSE}
+kable(SumTable_ha4, format = 'html', align = 'c',
+                  col.names = c("Site", "1959", "2020/21", "1959", "2020/21", 
+                                "1959", "2020/21", "2020/21")) %>% 
+            kable_styling(fixed_thead = TRUE, bootstrap_options = 'condensed', 
+                          full_width = FALSE, position = 'left', font_size = 12.5) %>%
+            #column_spec(c(2,4,6), color = "#74c476", border_left = TRUE) %>% 
+            #column_spec(c(3,5,7,8), color = "#006d2c") %>% 
+            add_header_above(c("", "Density (stems/ha)" = 2, "Basal area (m$^2$/ha)" = 2, 
+                               "Biomass (Mg/ha)" = 2,
+                               "CWD Vol. (m$^3$/ha)" = 1),
+                               extra_css = "border-bottom: 1px solid #000000; border-right: 3px solid #ffffff;",
+                               line = FALSE) 
+```
+
+</div>
