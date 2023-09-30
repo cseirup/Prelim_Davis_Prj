@@ -1,0 +1,224 @@
+---
+title: "Ch2 Exploratory figures and tables"
+author: "Camilla Seirup"
+date: "01/02/2023"
+always_allow_html: TRUE
+output:
+  html_document: default
+  pdf_document: default
+  word_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.kable.NA = '')
+```
+
+```{r import, include = FALSE, cache = FALSE}
+#do I need to load data here if it's in the compile script?
+```
+
+```{r deps, include = FALSE}
+library(tidyverse)
+library(forestNETN)
+library(htmltools)
+library(knitr)
+library(kableExtra)
+library(ggalt)
+```
+
+```{r compile_data, include = FALSE}
+source("03_Ch2_exploratory.R")
+```
+
+## Summary Figures
+
+```{r, echo=FALSE, warning=FALSE, out.height="100%", fig.height = 4.5, fig.width = 7.5}
+print(Comp_tree_dist_plot)
+```
+
+Figure 1. Stem density distributions from the 1959 sampling (red) and 2020-2022 resampling of six spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
+
+```{r, echo=FALSE, warning=FALSE}
+#print(Comp_tree_dist_bar) 
+```
+
+
+```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
+print(Comb_sp_plot)
+```
+
+Figure 2.1 Change in species composition option 1. All live trees >2.5 cm DBH included. Only the four most abundant species across all sites are displayed.
+
+```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
+print(Comb10_sp_plot)
+```
+
+Figure 2.2 Change in tree species composition. All live trees >10 cm DBH included. All species are displayed.
+
+```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
+print(Combsap_sp_plot)
+```
+
+Figure 2.3 Change in sapling species composition. All live saplings >2.5 cm and < 10 cm DBH included. All species are displayed. Species colors do not match Figure 2 and 3 colors at this time.
+
+
+```{r, echo=FALSE, out.height="100%", fig.height = 8}
+#print(dumbbell)
+```
+
+
+```{r, echo=FALSE, out.height="100%", fig.height = 9}
+#print(st_bar)
+```
+
+
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(stem_mapV)
+```
+
+Figure 3. Stem maps for the 2020-2022 sampling events.
+
+```{r, echo=FALSE, out.height="100%", fig.width = 12}
+print(stem_mapWP)
+```
+
+Figure 4. Stem map for first Western Mtn plot (20x100m).
+
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(sap_map)
+```
+
+Figure 5. Sapling (1 cm to 9.9 cm DBH) density heat maps per site for 2020-2022 visits. WP is not included. 
+
+## Tables
+
+Table 1. Density, basal area, biomass, and carbon mass calculated for each site and sampling event. All live trees > 10cm were included. Biomass is an estimate of above ground biomass. **Should we report 2020s sample including snags?**  Plot size for 1959 sample was 500 m$^2$. Plot size in 2020-2022 was 2000 m$^2$.
+
+```{r, echo=FALSE}
+kable(SumTable_ha4, format = 'html', align = 'c',
+                  col.names = c("Site", "1959", "2020/21", "1959", "2020/21", 
+                                "1959", "2020/21", "2020/21")) %>% 
+            kable_styling(fixed_thead = TRUE, bootstrap_options = 'condensed', 
+                          full_width = FALSE, position = 'left', font_size = 12.5) %>%
+            #column_spec(c(2,4,6), color = "#74c476", border_left = TRUE) %>% 
+            #column_spec(c(3,5,7,8), color = "#006d2c") %>% 
+            add_header_above(c("", "Density (stems/ha)" = 2, "Basal area (m$^2$/ha)" = 2, 
+                               "Biomass (Mg/ha)" = 2,
+                               "CWD Vol. (m$^3$/ha)" = 1),
+                               extra_css = "border-bottom: 1px solid #000000; border-right: 3px solid #ffffff;",
+                               line = FALSE) 
+```
+
+## Species Composition Ordinations
+```{r, echo=FALSE, out.height="100%"}
+print(IVBETsap_mMDS_plot)
+```
+
+Figure X1. NMDS ordination of importance value of live saplings >2.5cm DBH to 10 cm by species for all sites. All species are included: `r sort(names(ord_IV_sap_wide))`. For this ordination, all BEPA and BECO were pooled. Run 20 stress = 0.05488698 
+
+```{r, echo=FALSE, out.height="100%"}
+print(IVBETsap_mMDS_plot2)
+```
+
+Figure X2. NMDS ordination of importance value of live trees >2.5cm DBH by species for all sites. The top 8 species were included: `r sort(names(ord_IV_sap_wide2))`. For this ordination, all BEPA and BECO were pooled. Run 20 stress = 0.01719701 .
+
+I wasn't able to run trees >10cm by themselves b/c of too little data warnings. Below are NMDS of all individuals > 2.5 cm.
+
+```{r, echo=FALSE, out.height="100%"}
+print(IVBETall_mMDS_plot)
+```
+
+Figure X3. NMDS ordination of importance value of live trees >2.5cm DBH by species for all sites. All species are included: `r sort(names(ord_IV_all_wide))`. For this ordination, all BEPA and BECO were pooled. Run 20 stress = 0.01757825  
+
+```{r, echo=FALSE, out.height="100%"}
+print(IVBETall_mMDS_plot2)
+```
+
+Figure X4. NMDS ordination of importance value of live saplings >2.5cm DBH to 10 cm by species for all sites. The top 8 species were included: `r sort(names(ord_IV_all_wide2))`. For this ordination, all BEPA and BECO were pooled. Run 20 stress = 0.07299767.
+
+## Diameter Distribution Ordinations
+
+```{r, echo=FALSE, out.height="100%"}
+print(BAsz_mMDS_plot)
+```
+
+Figure X5. NMDS ordination of relative basal area by size class of all live trees >2.5cm DBH all sites. For this ordination, BEPA and BECO were pooled. Run 20 stress = 0.04807903 .
+
+```{r, echo=FALSE, out.height="100%"}
+print(densz_mMDS_plot)
+```
+
+Figure X6. NMDS ordination of relative density by size class of all live trees >2.5cm DBH all sites. For this ordination, BEPA and BECO were pooled. Run 20 stress = 0.3551195  .
+
+
+```{r, echo=FALSE, out.height="100%"}
+print(IVsz_mMDS_plot)
+```
+
+Figure X7. NMDS ordination of importance value by size class of all live trees >2.5cm DBH all sites. For this ordination, BEPA and BECO were pooled. Run 20 stress = 0.04097331.
+
+```{r, echo=FALSE, out.height="100%"}
+print(IVsz_mMDS_plot2)
+```
+
+Figure X8. NMDS ordination of importance value by size class of all live trees >2.5cm DBH all 2020's site visits. For this ordination, BEPA and BECO were pooled. Run 20 stress = 0.1935814.
+```{r, echo=FALSE, out.height="100%"}
+print(IVsz_mMDS_plot1)
+```
+
+Figure X9. NMDS ordination of importance value by size class of all live trees >2.5cm DBH all 1959 site visits. For this ordination, BEPA and BECO were pooled. Warning: stress nearly 0.
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+## Older PCA ordinations below
+
+```{r, echo=FALSE, out.height="100%"}
+print(BA_ord_plotALL)
+```
+
+Figure 5. PCA ordination of relative basal area of live trees >2.5cm DBH by species for all sites. All species are included: `r sort(names(ord_BA_wide))`. The first two principal components are visualized, accounting for 41% of the variation.
+
+
+```{r, echo=FALSE, out.height="100%"}
+print(BA_ord_plot)
+```
+
+Figure 6. PCA ordination of relative basal area of live trees >2.5cm DBH by species for all sites. The top eight most common tree species are included: `r sort(names(ord_BA_wide2))`. The first two principal components are visualized, accounting for 59% of the variation.
+
+
+```{r, echo=FALSE, out.height="100%"}
+print(F_ord_plot)
+```
+
+Figure 8. PCA ordination of relative frequency of live trees >2.5cm DBH by species for all sites. All species are included: `r sort(names(ord_F_wide))`. The first two principal components are visualized, accounting for 47% of the variation.
+
+```{r, echo=FALSE, out.height="100%"}
+print(IV_ord_plot)
+```
+
+Figure 9. PCA ordination of relative importance value of live trees >2.5cm DBH by species for all sites. All species are included: `r sort(names(ord_IV_wide))`. The first two principal components are visualized, accounting for 45% of the variation.
+
+```{r, echo=FALSE, out.height="100%"}
+print(IV10_ord_plot)
+```
+
+Figure 10. PCA ordination of relative importance value of live trees **>10cm DBH** by species for all sites. All species are included: `r sort(names(ord_10IV_wide))`. The first two principal components are visualized, accounting for 44% of the variation.
+
+
+```{r, echo=FALSE, out.height="100%"}
+print(BA_mMDS_plot)
+```
+
+Figure 11. NMDS ordination of relative basal area of live trees **>2.5cm DBH** by species for all sites. Top eight species are included: `r sort(names(ord_BA_wide2))`. I tried only including trees >10cm and each sampling time period separately, but I got 'stress level near to zero' errors. 
+
+
+```{r, echo=FALSE, out.height="100%"}
+print(NETN_pca_plot)
+```
+
+Figure 12. PCA ordination of relative importance value of live trees **>10cm DBH** by species for all Davis sites and all NETN plots with >50% spruce by importance value, Picea mariana not included). All species are included: `r sort(names(ordNETN_wide))`. The first two principal components are visualized, accounting for 19% of the variation. Physiographic class breakdown:  `r table(ACAD_phys$PhysiographySummary)`
+</div>

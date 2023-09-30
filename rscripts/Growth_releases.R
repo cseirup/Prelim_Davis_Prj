@@ -1,26 +1,34 @@
-#install.packages("dfoliatR")
+install.packages("tidyverse")
 library(tidyverse)
 library(dplR)
-library(TRADER)
+#library(TRADER)
 
 # Load ring width data ----------------------------------------------------
-BC <- read.tucson('../data/PIRU_best/BC_best.rwl')
-BM <- read.tucson('../data/PIRU_best/BM_best.rwl')
-PM <- read.tucson('../data/PIRU_best/PM_best.rwl')
-OP <- read.tucson('../data/PIRU_best/OP_best.rwl')
-WM <- read.tucson('../data/PIRU_best/WM_best.rwl')
+BC <- read.tucson('../Davis_data/PIRU_best/BC_best.rwl')
+BM <- read.tucson('../Davis_data/PIRU_best/BM_best.rwl')
+PM <- read.tucson('../Davis_data/PIRU_best/PM_best.rwl')
+OP <- read.tucson('../Davis_data/PIRU_best/OP_best.rwl')
+WMA <- read.fh('../Davis_data/PIRU_best/WMALL_best_stripped.fh')
+IB <- read.fh('../Davis_data/PIRU_best/IB_best_stripped.fh')
+BH <- read.fh('../Davis_data/PIRU_best/BH_best_stripped.fh')
+PM_TSCA <- read.fh('../Davis_data/PIRU_best/PM_TSCA_best_stripped.fh')
 
-Cores <- read.csv('../data/Davis_tree_cores_20210118.csv')#questionable use of rings to pith from this file
+
+Cores <- read.csv('../Davis_data/Davis_tree_cores_20230405.csv')#questionable use of rings to pith from this file
 Cores$Core <- str_replace(Cores$Core, "-","_")
 Cores <- rename(Cores, Core_ID = Core)
 
 #Use years to pith from CDendro attribute output
-BC_attr <- read.table('../data/PIRU_best/BC_best_STRIPPED_attributes.txt', header = TRUE)#CDENDRO outputs NULL d2p/y2p as 0, change to NA + remove header manually before bringing into R.
-BM_attr <- read.table('../data/PIRU_best/BM_best_STRIPPED_attributes.txt', header = TRUE)
-PM_attr <- read.table('../data/PIRU_best/PM_best_STRIPPED_attributes.txt', header = TRUE)
-OP_attr <- read.table('../data/PIRU_best/OP_STRIPPED_attributes.txt', header = TRUE)
-WM_attr <- read.table('../data/PIRU_best/WM_STRIPPED_attributes.txt', header = TRUE)
-attr <- bind_rows(BC_attr, BM_attr, PM_attr, OP_attr, WM_attr)
+BC_attr <- read.table('../Davis_data/PIRU_best/BC_best_STRIPPED_attributes.txt', header = TRUE)#CDENDRO outputs NULL d2p/y2p as 0, change to NA + remove header manually before bringing into R.
+BM_attr <- read.table('../Davis_data/PIRU_best/BM_best_STRIPPED_attributes.txt', header = TRUE)
+PM_attr <- read.table('../Davis_data/PIRU_best/PM_best_STRIPPED_attributes.txt', header = TRUE)
+OP_attr <- read.table('../Davis_data/PIRU_best/OP_STRIPPED_attributes.txt', header = TRUE)
+WMA_attr <- read.table('../Davis_data/PIRU_best/WMALL_best_STRIPPED_attributes.txt', header = TRUE)
+IB_attr <- read.table('../Davis_data/PIRU_best/IB_best_STRIPPED_attributes.txt', header = TRUE)
+BH_attr <- read.table('../Davis_data/PIRU_best/BH_best_STRIPPED_attributes.txt', header = TRUE)
+PM_TSCA_attr <- read.table('../Davis_data/PIRU_best/PM_TSCA_best_STRIPPED_attributes.txt', header = TRUE)
+
+attr <- bind_rows(BC_attr, BM_attr, PM_attr, OP_attr, WMA_attr, IB_attr, BH_attr, PM_TSCA_attr)
 
 # Create analysis dataset -------------------------------------------------
 #combine ring width data for all sites
@@ -28,24 +36,34 @@ BC1 <- rownames_to_column(BC, var = "year")
 BM1 <- rownames_to_column(BM, var = "year")
 PM1 <- rownames_to_column(PM, var = "year")
 OP1 <- rownames_to_column(OP, var = "year")
-WM1 <- rownames_to_column(WM, var = "year")
+WMA1 <- rownames_to_column(WMA, var = "year")
+IB1 <- rownames_to_column(IB, var = "year")
+BH1 <- rownames_to_column(BH, var = "year")
+PM_TSCA1 <- rownames_to_column(PM_TSCA, var = "year")
+
 
 All_rw <- full_join(BC1, BM1, by = "year")
-All_rw2 <- full_join(All_rw, PM1, var = "year")
-All_rw3 <- full_join(All_rw2, OP1, var = "year")
-All_rw4 <- full_join(All_rw3, WM1, var = "year")
+All_rw2 <- full_join(All_rw, PM1, by = "year")
+All_rw3 <- full_join(All_rw2, OP1, by = "year")
+All_rw4 <- full_join(All_rw3, WMA1, by = "year")
+All_rw5 <- full_join(All_rw4, IB1, by = "year")
+All_rw6 <- full_join(All_rw5, BH1, by = "year")
+All_rw7 <- full_join(All_rw6, PM_TSCA1, by = "year")
 
 #setting up attributes to include first/last years, length of series
-rw4 <- column_to_rownames(All_rw4, var = "year")
-stats <- rwl.stats(rw4)
+rw7 <- column_to_rownames(All_rw7, var = "year")
+stats <- rwl.stats(rw7)
 attr2 <- stats %>% full_join(attr, by = "series") %>% select("series", "first", "last", "year", "d2pith", "years2pith")
 attr2 <- rename(attr2, Core_ID = series)
 attr2 <- rename(attr2, length = year)
 
 #Reshape from wide to long
-names(All_rw4)
-All_long <-All_rw4 %>% pivot_longer(cols = c(BC_003:WM_047), names_to = "Core_ID",
+names(All_rw7)
+All_long <-All_rw7 %>% pivot_longer(cols = c(BC_003:PM_213), names_to = "Core_ID",
                values_to = "Ring_width")
+
+#All_long2 <- drop_na(All_long) #for Jay
+#write.csv(All_long2, "C:/01_NETN/Forest_Health/R_Dev/Davis_data/Davis_rseries_long_20221003.csv", row.names = FALSE )
 
 #combine with core information
 rgwd <- left_join(All_long, Cores, by = "Core_ID")
@@ -113,19 +131,19 @@ gr_plot<-function(df, ID){ # df = data frame, ID = Core_ID value
      scale_colour_manual(values = c(Abs_inc = "#46ac19", Per_inc = '#8479ff', Ring_width = '#bb0028'))+
      labs(x = "Year", y = "Ring width")+
      ggtitle(paste("Site =", df2$Site," ", "Core ID = ", ID, " ", "Rings to pith = ", df2$years2pith, " Years: ", df2$first, "-", df2$last, "(", df2$length, ")"))+
-     geom_hline(yintercept = 2, linetype = 'longdash', colour = '#8479ff', size = 1)+
-     geom_hline(yintercept = .58, linetype = 'twodash', colour = '#46ac19', size = 1)+
+     geom_hline(yintercept = 2, linetype = 'longdash', colour = '#8479ff', linewidth = 1)+
+     geom_hline(yintercept = .58, linetype = 'twodash', colour = '#46ac19', linewidth = 1)+
      theme_bw()
 } #function to create plot; df = dataframe created above; ID = Core to plot
 
-gr_plot(rgwd5, 'WM_026')#select a specific core to view
+gr_plot(rgwd5, 'PM_213')#select a specific core to view
 
 gr_plotlist <- map(Core_IDs, ~gr_plot(rgwd5, ID =.x)) #apply gr_plot function to each Core in the Core_IDs list
 
-gr_plotlist[[58]] # view a plot, in numerical order by Core_ID
+gr_plotlist[[300]] # view a plot, in numerical order by Core_ID
 
 #Save all plots to pdf for easy viewing
-pdf("gr_plots3.pdf", height = 7, width = 10)
+pdf("gr_plots_all_sites2.pdf", height = 7, width = 10)
 gr_plotlist
 dev.off()
 
@@ -133,32 +151,4 @@ dev.off()
 #will need to join with dataset of all years + count releases per year. NAs to 0
 #Fancy reach task: make viz and us brush to extract values
 ################################################
-
-
-#example plot, manually subset to a single core. Title does not update to the subset
-gr_plot <- ggplot(aes(x = year, y = RW_values, colour = RW_types), data = filter(rgwd5, Core_ID == 'OP_056'))+
-  geom_line(stat = "identity")+
-  scale_x_continuous(breaks = seq(1820, 2020, 10), expand = expansion(add = 2))+
-  scale_colour_manual(values = c(Abs_inc = "#46ac19", Per_inc = '#8479ff', Ring_width = '#bb0028'))+
-  labs(x = "Year", y = "Ring width")+
-  ggtitle(paste("Site =", rgwd5$Site," ", "Core ID =", " ", rgwd5$Core_ID, " ", "Rings to pith =", rgwd5$Rings.to.pith))+
-  geom_hline(yintercept = 2, linetype = 'longdash', colour = '#8479ff', size = 1)+
-  geom_hline(yintercept = .58, linetype = 'twodash', colour = '#46ac19', size = 1)+
-  theme_bw()
-
-gr_plot
-
-plot_sss<-function(d.df, df.rwl){
-  site<-deparse(substitute(df.rwl))
-  fig_name<-paste0("./chrono_graphs/", site, "_", "sss", '.jpg')
-  df.sss<-sss(d.df)
-  yr<-time(df.rwl)
-  ppi<-300
-  jpeg(file = fig_name, units='px', width=10*ppi, height=7*ppi, res=300) 
-  plot(yr, df.sss,type="p", ylim=c(0.4,1), xaxt="none",
-       col="blue", lwd=2, xlab="year", ylab="SSS") +
-    axis(3, seq(1600, 2020, 20)) +
-    abline(h=0.85, col="red") 
-  dev.off()
-
 

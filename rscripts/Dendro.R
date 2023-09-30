@@ -1,5 +1,10 @@
 #Davis project: signal sample depth, standardization, and chronologies
 
+
+#############################
+#NEEDS TO BE UPDATED WITH CODE FROM Standardize_Chrono and AgeStructure_Disturbance_Chrono
+##################################
+
 # Dendrochronology packages
 #install.packages("treeclim")
 library(dplR)
@@ -9,17 +14,33 @@ library(treeclim)
 library(tidyverse)
 
 # Load ring width data ----------------------------------------------------
-BC <- read.tucson('../data/PIRU_best/BC_best.rwl')
-BM <- read.tucson('../data/PIRU_best/BM_best.rwl')
-PM <- read.tucson('../data/PIRU_best/PM_best.rwl')
-OP <- read.tucson('../data/PIRU_best/OP_best.rwl')
-WM <- read.tucson('../data/PIRU_best/WM_best.rwl')
+BC <- read.tucson('../Davis_data/PIRU_best/BC_best.rwl')
+BM <- read.tucson('../Davis_data/PIRU_best/BM_best.rwl')
+PM <- read.tucson('../Davis_data/PIRU_best/PM_best.rwl')
+OP <- read.tucson('../Davis_data/PIRU_best/OP_best.rwl')
+WMA <- read.fh('../Davis_data/PIRU_best/WMALL_best_stripped.fh')
+IB <- read.fh('../Davis_data/PIRU_best/IB_best_stripped.fh')
+BH <- read.fh('../Davis_data/PIRU_best/BH_best_stripped.fh')
+PM_TSCA <- read.fh('../Davis_data/PIRU_best/PM_TSCA_best_stripped.fh')
 
-BC_attr <- read.table('../data/PIRU_best/BC_best_STRIPPED_attributes.txt', header = TRUE)#CDENDRO outputs NULL d2p/y2p as 0, change to NA + remove header manually before bringing into R.
-BM_attr <- read.table('../data/PIRU_best/BM_best_STRIPPED_attributes.txt', header = TRUE)
-PM_attr <- read.table('../data/PIRU_best/PM_best_STRIPPED_attributes.txt', header = TRUE)
-OP_attr <- read.table('../data/PIRU_best/OP_STRIPPED_attributes.txt', header = TRUE)
-WM_attr <- read.table('../data/PIRU_best/WM_STRIPPED_attributes.txt', header = TRUE)
+#Use years to pith from CDendro attribute output: Cores measured on Velmex do not have rings to pith data in attribute files
+BC_attr <- read.table('../Davis_data/PIRU_best/BC_best_STRIPPED_attributes.txt', header = TRUE)#CDENDRO outputs NULL d2p/y2p as 0, change to NA + remove header manually before bringing into R.
+BM_attr <- read.table('../Davis_data/PIRU_best/BM_best_STRIPPED_attributes.txt', header = TRUE)
+PM_attr <- read.table('../Davis_data/PIRU_best/PM_best_STRIPPED_attributes.txt', header = TRUE)
+OP_attr <- read.table('../Davis_data/PIRU_best/OP_STRIPPED_attributes.txt', header = TRUE)
+WMA_attr <- read.table('../Davis_data/PIRU_best/WMALL_best_STRIPPED_attributes.txt', header = TRUE)
+IB_attr <- read.table('../Davis_data/PIRU_best/IB_best_STRIPPED_attributes.txt', header = TRUE)
+BH_attr <- read.table('../Davis_data/PIRU_best/BH_best_STRIPPED_attributes.txt', header = TRUE)
+PM_TSCA_attr <- read.table('../Davis_data/PIRU_best/PM_TSCA_best_STRIPPED_attributes.txt', header = TRUE)
+
+attr <- bind_rows(BC_attr, BM_attr, PM_attr, OP_attr, WMA_attr, IB_attr, BH_attr, PM_TSCA_attr)
+attr <- rename(attr, Core_ID = series)
+
+#adding missing rings to pith to attr file
+a2 <- attr %>% left_join(Cores, by = "Core_ID") #left join with attr to only include cross-dated cores included in analysis
+names(Cores2)
+Cores3 <- Cores2 %>% mutate(diff = years2pith-Rings.to.pith) #correct any discrepancies
+Cores4 <- Cores3 %>%  select(1:6)
 
 # Summary Stats -----------------------------------------------------------
 #spag.plot(BC, plot.type="spag") #plot as stacked spaghetti 

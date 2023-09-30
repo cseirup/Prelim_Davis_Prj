@@ -1,8 +1,8 @@
 # Trying out ordination with Davis Data
 
-install.packages(c("Rcpp"))
+#install.packages(c("ggvegan"))
 #devtools::install_github("katemmiller/NETN_forest_summaries")
-#devtools::install_github("gavinsimpson/ggvegan")
+devtools::install_github("gavinsimpson/ggvegan")
 library(tidyverse)
 library(forestMIDN)
 library(vegan)
@@ -30,7 +30,7 @@ food_MDS <- metaMDS(food1)
 plot(food_MDS)
 #ordiplot(BA_comp_NMDS, type = "text")
 orditorp(food_MDS, display = "species")
-#orditorp(food_MDS, display = "sites")
+orditorp(food_MDS, display = "sites")
 
 
 # Setting up matrix for ordination  ---------------------------------------

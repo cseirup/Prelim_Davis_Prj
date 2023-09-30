@@ -1,26 +1,36 @@
 #Davis project: signal sample depth, standardization, and chronologies
 
 # Dendrochronology packages
-#install.packages("TRADER")
+install.packages("TRADER")
 library(dplR)
 library(TRADER)
-install.packages("na_if")
+#install.packages("na_if")
 #library(treeclim)
 # Data managment packages
 library(tidyverse)
 
 # Load ring width data ----------------------------------------------------
-BC <- read.tucson('../data/PIRU_best/BC_best.rwl')
-BM <- read.tucson('../data/PIRU_best/BM_best.rwl')
-PM <- read.tucson('../data/PIRU_best/PM_best.rwl')
-OP <- read.tucson('../data/PIRU_best/OP_best.rwl')
-WM <- read.tucson('../data/PIRU_best/WM_best.rwl')
+BC <- read.tucson('../Davis_data/PIRU_best/BC_best.rwl')
+BM <- read.tucson('../Davis_data/PIRU_best/BM_best.rwl')
+PM <- read.tucson('../Davis_data/PIRU_best/PM_best.rwl')
+OP <- read.tucson('../Davis_data/PIRU_best/OP_best.rwl')
+WMA <- read.fh('../Davis_data/PIRU_best/WMALL_best_stripped.fh')
+IB <- read.fh('../Davis_data/PIRU_best/IB_best_stripped.fh')
+BH <- read.fh('../Davis_data/PIRU_best/BH_best_stripped.fh')
+PM_TSCA <- read.fh('../Davis_data/PIRU_best/PM_TSCA_best_stripped.fh')
 
-BC_attr <- read.table('../data/PIRU_best/BC_best_STRIPPED_attributes.txt', header = TRUE)#CDENDRO outputs NULL d2p/y2p as 0, change to NA + remove header manually before bringing into R.
-BM_attr <- read.table('../data/PIRU_best/BM_best_STRIPPED_attributes.txt', header = TRUE)
-PM_attr <- read.table('../data/PIRU_best/PM_best_STRIPPED_attributes.txt', header = TRUE)
-OP_attr <- read.table('../data/PIRU_best/OP_STRIPPED_attributes.txt', header = TRUE)
-WM_attr <- read.table('../data/PIRU_best/WM_STRIPPED_attributes.txt', header = TRUE)
+#Use years to pith from CDendro attribute output: Cores measured on Velmex do not have rings to pith data in attribute files
+BC_attr <- read.table('../Davis_data/PIRU_best/BC_best_STRIPPED_attributes.txt', header = TRUE)#CDENDRO outputs NULL d2p/y2p as 0, change to NA + remove header manually before bringing into R.
+BM_attr <- read.table('../Davis_data/PIRU_best/BM_best_STRIPPED_attributes.txt', header = TRUE)
+PM_attr <- read.table('../Davis_data/PIRU_best/PM_best_STRIPPED_attributes.txt', header = TRUE)
+OP_attr <- read.table('../Davis_data/PIRU_best/OP_STRIPPED_attributes.txt', header = TRUE)
+WMA_attr <- read.table('../Davis_data/PIRU_best/WMALL_best_STRIPPED_attributes.txt', header = TRUE)
+IB_attr <- read.table('../Davis_data/PIRU_best/IB_best_STRIPPED_attributes.txt', header = TRUE)
+BH_attr <- read.table('../Davis_data/PIRU_best/BH_best_STRIPPED_attributes.txt', header = TRUE)
+PM_TSCA_attr <- read.table('../Davis_data/PIRU_best/PM_TSCA_best_STRIPPED_attributes.txt', header = TRUE)
+
+#attr <- bind_rows(BC_attr, BM_attr, PM_attr, OP_attr, WMA_attr, IB_attr, BH_attr, PM_TSCA_attr)
+#attr <- rename(attr, Core_ID = series)
 
 # Summary Stats -----------------------------------------------------------
 #spag.plot(BC, plot.type="spag") #plot as stacked spaghetti 
@@ -32,14 +42,21 @@ OP_stats<-rwl.stats(OP)
 #spag.plot(PM, plot.type="spag") #plot as stacked spaghetti 
 PM_stats<-rwl.stats(PM)
 #spag.plot(WM, plot.type="spag") #plot as stacked spaghetti 
-WM_stats<-rwl.stats(WM)
+WMA_stats<-rwl.stats(WMA)
+IB_stats<-rwl.stats(IB)
+BH_stats<-rwl.stats(BH)
+PM_TSCA_stats<-rwl.stats(PM_TSCA)
+
 
 #Changing years to pith to NA if greater than 10
 BC_attr$years2pith[BC_attr$years2pith > 10] <-NA
 BM_attr$years2pith[BM_attr$years2pith > 10] <-NA
 PM_attr$years2pith[PM_attr$years2pith > 10] <-NA
 OP_attr$years2pith[OP_attr$years2pith > 10] <-NA
-WM_attr$years2pith[WM_attr$years2pith > 10] <-NA
+WMA_attr$years2pith[WMA_attr$years2pith > 10] <-NA
+IB_attr$years2pith[IB_attr$years2pith > 10] <-NA
+BH_attr$years2pith[BH_attr$years2pith > 10] <-NA
+PM_TSCA_attr$years2pith[PM_TSCA_attr$years2pith > 10] <-NA
 
 #Combine series stats with pith info
 BC_age <- BC_stats %>% full_join(BC_attr, by = c("series"))%>% mutate(r_year = first - years2pith,) %>% 
@@ -50,8 +67,14 @@ PM_age <- PM_stats %>% full_join(PM_attr, by = c("series")) %>% mutate(r_year = 
                           mutate(r_age = year + years2pith) %>% drop_na()
 OP_age <- OP_stats %>% full_join(OP_attr, by = c("series")) %>% mutate(r_year = first - years2pith) %>% 
                           mutate(r_age = year + years2pith) %>% drop_na()
-WM_age <- WM_stats %>% full_join(WM_attr, by = c("series")) %>% mutate(r_year = first - years2pith) %>% 
-  mutate(r_age = year + years2pith) %>% drop_na()
+WMA_age <- WMA_stats %>% full_join(WMA_attr, by = c("series")) %>% mutate(r_year = first - years2pith) %>% 
+                          mutate(r_age = year + years2pith) %>% drop_na()
+IB_age <- IB_stats %>% full_join(IB_attr, by = c("series")) %>% mutate(r_year = first - years2pith) %>% 
+                          mutate(r_age = year + years2pith) %>% drop_na()
+BH_age <- BH_stats %>% full_join(BH_attr, by = c("series")) %>% mutate(r_year = first - years2pith) %>% 
+                          mutate(r_age = year + years2pith) %>% drop_na()
+PM_TSCA_age <- PM_TSCA_stats %>% full_join(PM_TSCA_attr, by = c("series")) %>% mutate(r_year = first - years2pith) %>% 
+                          mutate(r_age = year + years2pith) %>% drop_na()
 
 # Plot Recruitment Age ---------------------------------------------------------
 
@@ -69,7 +92,7 @@ ageD<-ggplot(BC_age, aes(x=r_year))+
         panel.grid.major = element_blank()) 
 
 ageD
-ggsave(file="./figures/BC_age_dist2.jpg", ageD, dpi=300, width=5, height=3, units='in')
+ggsave(file="./figures/BC_age_dist.jpg", ageD, dpi=300, width=5, height=3, units='in')
 
 ageD<-ggplot(BM_age, aes(x=r_year))+
   geom_bar(fill = '#006400') +
@@ -119,11 +142,11 @@ ageD<-ggplot(OP_age, aes(x=r_year))+
 ageD
 ggsave(file="./figures/OP_age_dist2.jpg", ageD, dpi=300, width=5, height=3, units='in')
 
-ageD<-ggplot(WM_age, aes(x=r_year))+
+ageD<-ggplot(WMA_age, aes(x=r_year))+
   geom_bar(fill = '#006400') +
   #geom_line(aes(y = "samp.depth")) + 
   labs(x='Recruitment Decade', y='Number of Trees', title = 'Recruitment age of red spruce at Bernard Mtn')+ 
-  theme_bw()+scale_x_binned(show.limits = TRUE, limits = c(1740, 2020), n.breaks = 21)+ 
+  theme_bw()+scale_x_binned(show.limits = TRUE, limits = c(1720, 2020), n.breaks = 21)+ 
   theme(axis.text.x=element_text(angle=30,hjust=1, size = 6),
         axis.ticks = element_line(),
         axis.text.y = element_text(size = 6),
@@ -133,7 +156,57 @@ ageD<-ggplot(WM_age, aes(x=r_year))+
         panel.grid.major = element_blank()) 
 
 ageD
-ggsave(file="./figures/WM_age_dist2.jpg", ageD, dpi=300, width=5, height=3, units='in')
+ggsave(file="./figures/WMA_age_dist2.jpg", ageD, dpi=300, width=5, height=3, units='in')
+
+ageD<-ggplot(IB_age, aes(x=r_year))+
+  geom_bar(fill = '#006400') +
+  #geom_line(aes(y = "samp.depth")) + 
+  labs(x='Recruitment Decade', y='Number of Trees', title = 'Recruitment age of red spruce at Ironbound Is.')+ 
+  theme_bw()+scale_x_binned(show.limits = TRUE, limits = c(1720, 2020), n.breaks = 21)+ 
+  theme(axis.text.x=element_text(angle=30,hjust=1, size = 6),
+        axis.ticks = element_line(),
+        axis.text.y = element_text(size = 6),
+        axis.title.y = element_text(size = 8),
+        axis.title.x = element_text(size = 8),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank()) 
+
+ageD
+ggsave(file="./figures/IB_age_dist2.jpg", ageD, dpi=300, width=5, height=3, units='in')
+
+
+ageD<-ggplot(BH_age, aes(x=r_year))+
+  geom_bar(fill = '#006400') +
+  #geom_line(aes(y = "samp.depth")) + 
+  labs(x='Recruitment Decade', y='Number of Trees', title = 'Recruitment age of red spruce at Bass Harbor Head')+ 
+  theme_bw()+scale_x_binned(show.limits = TRUE, limits = c(1840, 2020), n.breaks = 21)+ 
+  theme(axis.text.x=element_text(angle=30,hjust=1, size = 6),
+        axis.ticks = element_line(),
+        axis.text.y = element_text(size = 6),
+        axis.title.y = element_text(size = 8),
+        axis.title.x = element_text(size = 8),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank()) 
+
+ageD
+ggsave(file="./figures/BH_age_dist2.jpg", ageD, dpi=300, width=5, height=3, units='in')
+
+ageD<-ggplot(PM_TSCA_age, aes(x=r_year))+
+  geom_bar(fill = '#006400') +
+  #geom_line(aes(y = "samp.depth")) + 
+  labs(x='Recruitment Decade', y='Number of Trees', title = 'Recruitment age of hemlock at Pemetic Mtn')+ 
+  theme_bw()+scale_x_binned(show.limits = TRUE, limits = c(1810, 2020), n.breaks = 21)+ 
+  theme(axis.text.x=element_text(angle=30,hjust=1, size = 6),
+        axis.ticks = element_line(),
+        axis.text.y = element_text(size = 6),
+        axis.title.y = element_text(size = 8),
+        axis.title.x = element_text(size = 8),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank()) 
+
+ageD
+ggsave(file="./figures/PM_TSCA_age_dist2.jpg", ageD, dpi=300, width=5, height=3, units='in')
+
 
 # Detrending --------------------------------------------------------------
 #i.detrend() #Detrend one by one (recommended) or detrend(df, method = c("Friedman") to do all at once
@@ -150,8 +223,19 @@ BM_M<-detrend(BM, method = c("Mean")) #for stand dynamics
 PM_Fr<-detrend(PM, method = c("Friedman")) #for climate growth relationship
 PM_M<-detrend(PM, method = c("Mean")) #for stand dynamics
 
-WM_Fr<-detrend(WM, method = c("Friedman")) #for climate growth relationship
-WM_M<-detrend(WM, method = c("Mean")) #for stand dynamics
+WMA_Fr<-detrend(WMA, method = c("Friedman")) #for climate growth relationship
+WMA_M<-detrend(WMA, method = c("Mean")) #for stand dynamics
+
+IB_Fr<-detrend(IB, method = c("Friedman")) #for climate growth relationship
+IB_M<-detrend(IB, method = c("Mean")) #for stand dynamics
+
+BH_Fr<-detrend(BH, method = c("Friedman")) #for climate growth relationship
+BH_M<-detrend(BH, method = c("Mean")) #for stand dynamics
+
+PM_TSCA_Fr<-detrend(PM_TSCA, method = c("Friedman")) #for climate growth relationship
+PM_TSCA_M<-detrend(PM_TSCA, method = c("Mean")) #for stand dynamics
+
+
 # Sample Signal Strength --------------------------------------------------
 #Run subsample signal strength analysis to see where the chronology should be truncated due to to small sample depth.
 #sss(df_rwi; df_ids) need to get a table with IDs (col 1 = tree ID, col 2 = core ID)
@@ -180,7 +264,14 @@ plot_sss(OP_Fr, OP) #OP should truncate at 1960s
 
 plot_sss(PM_Fr, PM) #PM should truncate at 1880s
 
-plot_sss(WM_Fr, WM) #WM should truncate at 1785s
+plot_sss(PM_TSCA_Fr, PM_TSCA) #PM TSCA should truncate at 1880s
+
+plot_sss(WMA_Fr, WMA) #should truncate at 1790s
+
+plot_sss(IB_Fr, IB) #should truncate at 1850s
+
+plot_sss(BH_Fr, BH) #should truncate at 1970s
+
 # Chronologies------------------------------------------------------------
 #generate chronology file, format .crn
 BC_Fr_chr <- chron(BC_Fr, prefix = "BCF")
@@ -195,9 +286,17 @@ OP_M_chr <- chron(OP_M, prefix = "OPM")
 PM_Fr_chr <- chron(PM_Fr, prefix = "PMF")
 PM_M_chr <- chron(PM_M, prefix = "PMM")
 
-WM_Fr_chr <- chron(WM_Fr, prefix = "WMF")
-WM_M_chr <- chron(WM_M, prefix = "WMM")
+WMA_Fr_chr <- chron(WMA_Fr, prefix = "WMAF")
+WMA_M_chr <- chron(WMA_M, prefix = "WMAM")
 
+IB_Fr_chr <- chron(IB_Fr, prefix = "IBF")
+IB_M_chr <- chron(IB_M, prefix = "IBM")
+
+BH_Fr_chr <- chron(BH_Fr, prefix = "BHF")
+BH_M_chr <- chron(BH_M, prefix = "BHM")
+
+PM_TSCA_Fr_chr <- chron(PM_TSCA_Fr, prefix = "PM_TSCA_F")
+PM_TSCA_M_chr <- chron(PM_TSCA_M, prefix = "PM_TScA_M")
 #plot chronology
 
 #jpeg(file = "./chrono_graphs/BC_Fr_chr.jpg", units='px', width=10*ppi, height=7*ppi, res=300)
@@ -225,10 +324,15 @@ print_crn(OP_M_chr)
 print_crn(PM_Fr_chr)
 print_crn(PM_M_chr)
 
-print_crn(WM_Fr_chr)
-print_crn(WM_M_chr)
-# Disturbance Reconstruction ----------------------------------------------
-#use absolute increase method for determining growth release. PIRU threshold .58 (Shawn data)
-#Sub par compared to Shawn's SAS code, how to ID gap recruits? Do I use RWI or raw rign widths?
+print_crn(WMA_Fr_chr)
+print_crn(WMA_M_chr)
 
+print_crn(IB_Fr_chr)
+print_crn(IB_M_chr)
+
+print_crn(BH_Fr_chr)
+print_crn(BH_M_chr)
+
+print_crn(PM_TSCA_Fr_chr)
+print_crn(PM_TSCA_M_chr)
 

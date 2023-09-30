@@ -1,0 +1,149 @@
+---
+title: "Ch1 exploratory figures subset"
+author: "Camilla Seirup"
+date: "2023-01-31"
+output: html_document
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+options(knitr.kable.NA = '')
+```
+
+```{r import, include = FALSE, cache = FALSE}
+#do I need to load data here if it's in the compile script?
+```
+
+```{r deps, include = FALSE}
+library(tidyverse)
+library(forestNETN)
+library(htmltools)
+library(knitr)
+library(kableExtra)
+library(ggalt)
+```
+
+```{r compile_data, include = FALSE}
+source("davis_functions.R")
+source("03_Ch1_exploratory.R")
+source("AgeStructure_DisturbanceChrono.R")
+```
+
+## Summary Figures
+
+```{r, echo=FALSE, warning=FALSE, out.height="100%", fig.height = 4.5, fig.width = 7.5}
+print(Comp_tree_dist_plot)
+```
+
+Figure 1. Stem density distributions from the 1959 sampling (red) and 2020-2022 resampling of six spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
+
+```{r, echo=FALSE, warning=FALSE}
+#print(Comp_tree_dist_bar) 
+```
+
+
+```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
+print(Comb_sp_plot)
+```
+
+Figure 2.1 Change in species composition option 1. All live trees >2.5 cm DBH included. Only the four most abundant species across all sites are displayed.
+
+```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
+print(Comb10_sp_plot)
+```
+
+Figure 2.2 Change in tree species composition. All live trees >10 cm DBH included. Species with > 2 m$^2$/ha across all sites in either 1959 or th 2020s included. Betula papyrifera, Betula cordifolia, and Betula alleghaniensis pooled as Betula sp. 
+
+```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
+print(Combsap_sp_plot)
+```
+
+Figure 2.3 Change in sapling species composition. All live saplings >2.5 cm and < 10 cm DBH included. All species are displayed. Species colors do not match Figure 2 and 3 colors at this time.
+
+
+```{r, echo=FALSE, out.height="100%", fig.height = 8}
+#print(dumbbell)
+```
+
+
+```{r, echo=FALSE, out.height="100%", fig.height = 9}
+#print(st_bar)
+```
+
+
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(stem_mapV)
+```
+
+Figure 3. Stem maps for the 2020-2022 sampling events.
+
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(sap_map)
+```
+
+Figure 4. Sapling (1 cm to 9.9 cm DBH) density heat maps per site for 2020-2022 visits. WP is not included. 
+
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(Box_den)
+```
+Figure 6. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the density calculated for the full plot are included. Only live trees >10cm.
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(Box_BA)
+```
+Figure 7. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the basal area calculated for the full plot are included. Only live trees >10cm.
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(Box_bio)
+```
+Figure 8. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the biomass calculated for the full plot are included. Only live trees >10cm.
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(DistPlotAnn)
+```
+Figure 9. Disturbance chronology. Growth releases/gap recruits not binned by decade. Grey area is where the sample depth falls below 5 cores.
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(ageD)
+```
+Figure 10. Recruitment age distributions, including Davis cores.
+
+
+## Tables
+Table 1. Location description information for the seven sites included in the study.
+
+```{r, echo=FALSE}
+kable(dSites, format = 'html', align = 'c') %>% 
+            kable_styling(fixed_thead = TRUE, bootstrap_options = 'condensed', 
+                          full_width = FALSE, position = 'left', font_size = 12.5)
+             
+```
+
+
+Table 2. Density, basal area, biomass, and carbon mass calculated for each site and sampling event. All live trees > 10cm were included. Biomass is an estimate of above ground biomass. **Should we report 2020s sample including snags?**  Plot size for 1959 sample was 500 m$^2$. Plot size in 2020-2022 was 2000 m$^2$.
+
+```{r, echo=FALSE}
+kable(SumTable_ha4, format = 'html', align = 'c',
+                  col.names = c("Site", "1959", "2020/21", "1959", "2020/21", 
+                                "1959", "2020/21", "2020/21")) %>% 
+            kable_styling(fixed_thead = TRUE, bootstrap_options = 'condensed', 
+                          full_width = FALSE, position = 'left', font_size = 12.5) %>%
+            #column_spec(c(2,4,6), color = "#74c476", border_left = TRUE) %>% 
+            #column_spec(c(3,5,7,8), color = "#006d2c") %>% 
+            add_header_above(c("", "Density (stems/ha)" = 2, "Basal area (m$^2$/ha)" = 2, 
+                               "Biomass (Mg/ha)" = 2,
+                               "CWD Vol. (m$^3$/ha)" = 1),
+                               extra_css = "border-bottom: 1px solid #000000; border-right: 3px solid #ffffff;",
+                               line = FALSE) 
+```
+
+Table 3. Increment cores collected per site and the interseries correlation coefficient after cross-dating.
+
+```{r, echo=FALSE}
+kable(sCores, format = 'html', align = 'c') %>% 
+            kable_styling(fixed_thead = TRUE, bootstrap_options = 'condensed', 
+                          full_width = FALSE, position = 'left', font_size = 12.5)
+             
+```
