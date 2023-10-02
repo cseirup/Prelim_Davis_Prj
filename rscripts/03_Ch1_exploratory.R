@@ -200,8 +200,10 @@ tree_dist_ha <- Comb_tree_event %>% select(-c(NumSubplots, SubplotArea, Module, 
             SiteName = first(SiteName)) %>% 
   mutate(num_stems_ha = round(sum_stems * (10000/TotArea), digits = 0), 
          BA_m2ha = sum_BA_cm2/TotArea) %>% 
+  mutate(log10stems_ha = log10(num_stems_ha)) %>% 
   select(Site, SiteName, SampleEventNum, SampleYear, 
-         size_class, num_stems_ha, BA_m2ha) 
+         size_class, num_stems_ha, BA_m2ha,log10stems_ha)
+  
 
 # Plot diameter distribution comparison -----------------------------------
 #Connected lines
@@ -227,6 +229,30 @@ Comp_tree_dist_plot <- ggplot(data = tree_dist_ha, aes(color = SampleEventNum, x
   theme_FHM() 
 
 Comp_tree_dist_plot  
+
+#log10 diameter distribution
+Log10_tree_dist_plot <- ggplot(data = tree_dist_ha, aes(color = SampleEventNum, x = size_class, y = log10stems_ha))+
+  geom_point()+ 
+  geom_line(aes(group = SampleEventNum), linewidth = 2)+
+  facet_wrap(~Site, ncol = 4, labeller = as_labeller(site_names))+
+  labs(x = "Tree Diameter Class (cm)", y = "log10(stems/ha)")+ 
+  theme(axis.text = element_text(size = 9), # change axis label size
+        strip.text = element_text(size = 10), # change facet text size
+        axis.title = element_text(size = 12), # change axis title size
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        axis.title.y = element_text(margin = margin(r = 5)),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12))+
+  #legend.position = c(1,0),
+  #legend.justification = c(1,0))+
+  scale_color_manual(name = "Year", labels = c("1" = '1959', "2" = '2020-2022'), 
+                     values = c("1" = '#a1d99b', "2" = '#31a354'))+
+  scale_x_discrete(labels= c('2.5-10','10-20',
+                             '20-30','30-40','40-50',
+                             '50-60','60-70','70+'))+ 
+  theme_FHM() 
+
+Log10_tree_dist_plot  
 
 #staggered bar plots
 Comp_tree_dist_bar <- ggplot(data = tree_dist_ha, aes(x = size_class, y = num_stems_ha, fill = SampleEventNum))+
@@ -540,11 +566,8 @@ Comb10_sp_plot <- ggplot(tree10_sp_ha_BET2, aes(x = Species, y = BA_m2ha, fill =
         axis.title.y = element_text(margin = margin(r = 5)),
         legend.text = element_text(size = 10, face = "italic"),
         legend.title = element_text(size = 10))+
-  #legend.position = c(1,0),
-  #legend.justification = c(1,0))+
-  #scale_x_discrete(labels= c("1" = '1959', "2" = '2020-2022'))+
-  #scale_color_manual(name = "Species", labels = c(sp_names), 
-                     #values = c('#2c7bb6', '#abd9e9','#fdae61', '#d7191c'))+
+  scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020s'), 
+                    values = c("1" = '#a1d99b', "2" = '#31a354'))+
   theme_FHM() 
 
 Comb10_sp_plot
@@ -614,15 +637,65 @@ Combsap_sp_plot <- ggplot(saps_sp_ha_BET, aes(x = Species, y = BA_m2ha, fill = S
         axis.title.y = element_text(margin = margin(r = 5)),
         legend.text = element_text(size = 10, face = "italic"),
         legend.title = element_text(size = 10))+
-  #legend.position = c(1,0),
-  #legend.justification = c(1,0))+
-  #scale_x_discrete(labels= c("1" = '1959', "2" = '2020-2022'))+
-  #scale_color_manual(name = "Species", labels = c(sp_names), 
-  #values = c('#2c7bb6', '#abd9e9','#fdae61', '#d7191c'))+
+  scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020s'), 
+                    values = c("1" = '#a1d99b', "2" = '#31a354'))+
   theme_FHM() 
 
 
 Combsap_sp_plot
+
+#Seedlings change in comp
+list2env(data["seeds"], envir = .GlobalEnv)
+list2env(data["seeds59"], envir = .GlobalEnv)
+
+names(seeds)
+seeds2 <- seeds %>% filter(Latin_name != "No species") %>%
+                    filter(Site != "WP") %>% 
+                    group_by(Site, Latin_name) %>% 
+                    summarise(Sum_stem = sum(Count),
+                              SampleYear = first(SampleYear),
+                              SampleEventNum = first(SampleEventNum)) %>% 
+                    mutate(den_m2 = Sum_stem/30) # 30 m2 quadrats, convert to per m2
+#adding species records w/ zeros to make the plot bars the right size
+seeds3 <- seeds2 %>% select(Site, Latin_name, den_m2, SampleYear, SampleEventNum) %>%
+                      ungroup() 
+
+seeds4 <- rbind(seeds3, seeds59)
+seeds4$SampleEventNum <- as.character(seeds4$SampleEventNum)
+
+seeds5 <- seeds4 %>% 
+  add_row(Site = 'BC', Latin_name = 'Abies balsamea', den_m2 = 0, SampleEventNum = '2') %>% 
+  add_row(Site = 'BC', Latin_name = 'Pinus strobus', den_m2 = 0, SampleEventNum = '1') %>% 
+  add_row(Site = 'BH', Latin_name = 'Sorbus decora', den_m2 = 0, SampleEventNum = '1') %>%
+  add_row(Site = 'BM', Latin_name = 'Abies balsamea', den_m2 = 0, SampleEventNum = '2') %>% 
+  add_row(Site = 'BM', Latin_name = 'Tsuga canadensis', den_m2 = 0, SampleEventNum = '1') %>% 
+  add_row(Site = 'IB', Latin_name = 'Abies balsamea', den_m2 = 0, SampleEventNum = '2') %>% 
+  add_row(Site = 'IB', Latin_name = 'Acer rubrum', den_m2 = 0, SampleEventNum = '2') %>%
+  add_row(Site = 'IB', Latin_name = 'Pinus strobus', den_m2 = 0, SampleEventNum = '1') %>%
+  add_row(Site = 'OP', Latin_name = 'Abies balsamea', den_m2 = 0, SampleEventNum = '2') %>% 
+  add_row(Site = 'OP', Latin_name = 'Amelanchier', den_m2 = 0, SampleEventNum = '2') %>% 
+  add_row(Site = 'PM', Latin_name = 'Betula papyrifera', den_m2 = 0, SampleEventNum = '2') %>% 
+  add_row(Site = 'PM', Latin_name = 'Tsuga canadensis', den_m2 = 0, SampleEventNum = '1') 
+
+
+seeds_sp_plot <- ggplot(seeds5, aes(x = Latin_name, y = den_m2, fill = SampleEventNum))+
+  geom_bar(position="dodge", stat="identity")+
+  facet_wrap(~Site, ncol = 4, labeller = as_labeller(site_names))+
+  xlab('Species')+
+  ylab(bquote('Density (stems/'~m^2*')'))+ 
+  theme(axis.text = element_text(size = 9), # change axis label size
+        strip.text = element_text(size = 10), # change facet text size
+        axis.title = element_text(size = 12), # change axis title size
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.title.y = element_text(margin = margin(r = 5)),
+        legend.text = element_text(size = 10, face = "italic"),
+        legend.title = element_text(size = 10))+
+  scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020s'), 
+                    values = c("1" = '#a1d99b', "2" = '#31a354'))+
+  theme_FHM() 
+
+seeds_sp_plot
+
 
 #Alternate visualizations
 
@@ -670,7 +743,7 @@ list2env(data["saps"], envir = .GlobalEnv)
 saps$Site <- ordered(saps$Site,
                       levels = c("BM", "PM", "BC",  "OP", "BH","IB", "WP", "WP2"))
 
-saps2 <- saps %>% mutate(X = case_when(Transect == 1|Transect == 3 ~ 2.5, 
+sapsb <- saps %>% mutate(X = case_when(Transect == 1|Transect == 3 ~ 2.5, 
                                        Transect == 2|Transect == 4 ~ 7.5)) %>%  
                   mutate(Y = case_when(Transect == 3|Transect == 4 ~ Quadrat+100,
                                        Transect == 1|Transect == 2 ~ Quadrat+0)) %>%
@@ -678,12 +751,12 @@ saps2 <- saps %>% mutate(X = case_when(Transect == 1|Transect == 3 ~ 2.5,
                   mutate(num_stems = 1) #drop_na deletes quadrats with no saplings recorded
 
 #summarize by site and remove WP (oddly shaped plot, would have to be handled seperately)
-saps3 <- saps2 %>% group_by(Site, Transect, Quadrat) %>% summarise(sum_stems = sum(num_stems),
+sapsc <- sapsb %>% group_by(Site, Transect, Quadrat) %>% summarise(sum_stems = sum(num_stems),
                                                                       X = first(X),
                                                                       Y = first(Y)) %>% 
                   filter(Site != 'WP')
 
-sap_map <- ggplot(saps3, aes(X,Y)) +
+sap_map <- ggplot(sapsc, aes(X,Y)) +
             geom_tile(aes(fill = sum_stems))+
             facet_wrap(~Site, ncol = 7, labeller = as_labeller(site_names))+
             scale_fill_gradient(low = "white", high = "#006600")+
@@ -703,6 +776,40 @@ sap_map <- ggplot(saps3, aes(X,Y)) +
             theme_FHM()
 
 sap_map
+
+
+# Combined tree stem map + sap heat map -----------------------------------
+sapsd <- sapsc %>% rename(cX = X, cY = Y) %>% select(-Quadrat) #renameing columns to match trees
+treesB <- trees %>% select(Site, Transect, Status, DBH, cX, cY) %>%  filter(Site!='WP')
+
+treesap_map <- ggplot(treesB, aes(x = cY, y = cX))+
+  geom_tile(data = sapsd, aes(fill = sum_stems))+
+  geom_hline(yintercept = 5, linetype = 2)+
+  geom_vline(xintercept = 100, linetype = 2)+ 
+  scale_fill_gradient(low = "white", high = "#006600")+
+ geom_point(aes(color = Status, size = DBH))+
+ scale_color_manual(name = "Status", labels = c("Dead", "Live"), 
+                     values = c("D" = '#808080', "L" = '#31a354'))+
+  scale_size_continuous(range = c(.5, 3.5))+
+  facet_wrap(~Site, ncol = 7, labeller = as_labeller(site_names))+
+  labs(x = "Easting (meters)", y = "Northing (meters)")+ 
+  theme(axis.text = element_text(size = 10), 
+        strip.text = element_text(size = 10), #facet wrap text size
+        axis.title = element_text(size = 12),
+        legend.text = element_text(size = 12),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line = element_line(color = "#696969", size = 0.01),
+        axis.ticks = element_line(color = "#696969", size = 0.5),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        strip.background = element_blank(),
+        axis.title.y = element_text(margin = margin(r = 5)),
+        aspect.ratio = 10/3,
+        legend.position = "right")+
+  coord_flip()+
+  theme_FHM()
+
+treesap_map
 
 
 # NETN Plot Data ----------------------------------------------------------

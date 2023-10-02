@@ -1,7 +1,7 @@
 ---
 title: "Ch1 exploratory figures subset"
 author: "Camilla Seirup"
-date: "2023-01-31"
+date: "2023-10-01"
 output: html_document
 ---
 ```{r setup, include=FALSE}
@@ -34,30 +34,59 @@ source("AgeStructure_DisturbanceChrono.R")
 print(Comp_tree_dist_plot)
 ```
 
-Figure 1. Stem density distributions from the 1959 sampling (red) and 2020-2022 resampling of six spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
+Figure 2. Stem density distributions from the 1959 sampling and 2020-2022 resampling of seven spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
 
+```{r, echo=FALSE, warning=FALSE, out.height="100%", fig.height = 4.5, fig.width = 7.5}
+print(Log10_tree_dist_plot  )
+```
+
+Figure 2b. Log10 stem density distributions from the 1959 sampling and 2020-2022 resampling to better determine the shape of the curve. Likely not needed?
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(stem_mapV)
+```
+
+Figure 3. Stem maps for the 2020-2022 sampling events.
+
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(sap_map)
+```
+
+Figure 4. Sapling (1 cm to 9.9 cm DBH) density heat maps per site for 2020-2022 visits. WP is not included. 
 ```{r, echo=FALSE, warning=FALSE}
 #print(Comp_tree_dist_bar) 
 ```
 
-
-```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
-print(Comb_sp_plot)
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(treesap_map)
 ```
 
-Figure 2.1 Change in species composition option 1. All live trees >2.5 cm DBH included. Only the four most abundant species across all sites are displayed.
+Figure 4B. Tree stem map and sapling heat map combined. 
+
+```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
+#print(Comb_sp_plot) #Figure 2.1 Change in species composition option 1. All live trees >2.5 cm DBH included. Only the four most abundant species across all sites are displayed.
+```
+
+Figure 5 Notes: will customize this figures by site to display a subset of species appropriate for each site. Species selection will be carried through tree, sap, and seed figure. Organize by developmental stage or by site?
 
 ```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
 print(Comb10_sp_plot)
 ```
 
-Figure 2.2 Change in tree species composition. All live trees >10 cm DBH included. Species with > 2 m$^2$/ha across all sites in either 1959 or th 2020s included. Betula papyrifera, Betula cordifolia, and Betula alleghaniensis pooled as Betula sp. 
+Figure 5.1 Change in tree species composition. Live trees >10 cm DBH included. Species with > 2 m$^2$/ha across all sites in either 1959 or th 2020s included. Betula papyrifera, Betula cordifolia, and Betula alleghaniensis pooled as Betula sp. 
 
 ```{r, echo=FALSE, out.height="100%", fig.height = 3.5, fig.width = 7.2}
 print(Combsap_sp_plot)
 ```
 
-Figure 2.3 Change in sapling species composition. All live saplings >2.5 cm and < 10 cm DBH included. All species are displayed. Species colors do not match Figure 2 and 3 colors at this time.
+Figure 5.2 Change in sapling species composition. Live saplings >2.5 cm and < 10 cm DBH included. Only species with > 0.1 m2/ha BA across all sites in either 1959 or th 2020s included, Betula species pooled as Betula sp.
+
+
+```{r, echo=FALSE, out.height="100%", fig.height = 8}
+print(seeds_sp_plot)
+```
+
+Figure 5.3 Change in seedling species composition. 2020s: Live seedling greater than 15 cm tall and <2.5 cm DBH included. 1959: Live established seedlings <2.5 cm DBH included.
 
 
 ```{r, echo=FALSE, out.height="100%", fig.height = 8}
@@ -68,21 +97,6 @@ Figure 2.3 Change in sapling species composition. All live saplings >2.5 cm and 
 ```{r, echo=FALSE, out.height="100%", fig.height = 9}
 #print(st_bar)
 ```
-
-
-
-```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
-print(stem_mapV)
-```
-
-Figure 3. Stem maps for the 2020-2022 sampling events.
-
-
-```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
-print(sap_map)
-```
-
-Figure 4. Sapling (1 cm to 9.9 cm DBH) density heat maps per site for 2020-2022 visits. WP is not included. 
 
 
 ```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
