@@ -304,33 +304,7 @@ DistPlotAnn
 
 #ggsave("../figures/GR_smdp_plot_annual.jpg", DistPlotAnn, height = 5, width = 10, dpi = 300)
 
-# Disturbance Chrono: raw sample depth -------------------------------
-coeff <- 10
-DistPlotAnn2<-ggplot(gr8)+
-  geom_vline(linetype = 2, show.legend = FALSE, data = gr8, aes(xintercept = XMAX,  color = "Sample Depth = 5"))+
-  #geom_rect(aes(ymax = 100, ymin = 0, xmin = XMIN, xmax = XMAX), fill="lightgrey", alpha = 0.5)+
-  geom_line(stat = "identity", linetype = 3, linewidth = .9, aes(x = year, y = sample_depth/coeff, color = "Sample Depth"))+
-  scale_colour_manual(values = c("black","darkgrey")) +
-  scale_linetype_manual(values = "dotted", "dashed")+
-  guides(colour = guide_legend(title = NULL, override.aes = list(linetype=c(3,2))))+
-  theme_bw()+
-  geom_bar(stat = 'identity', position = 'stack', aes(fill=Release_type, x=year, y=count))+
-  labs(x='Year')+ 
-  facet_wrap(~Site, ncol = 1, scales = "free")+
-  scale_x_continuous(n.breaks = 20)+
-  scale_fill_manual(values = c( "cornflowerblue","darkorange"), name = "Release type", labels = c("Gap recruit", "Growth release"))+ 
-  scale_y_continuous(name = "No. trees showing a disturbance", sec.axis = sec_axis(~.*coeff, name = "Sample Depth (no. cores)"))+
-  theme(axis.text.x=element_text(angle=45,hjust=1, size = 6), 
-        axis.ticks = element_line(),
-        axis.text.y = element_text(size = 8),
-        axis.title.y = element_text(size = 10),
-        axis.title.x = element_text(size = 10),
-        panel.grid.minor = element_blank(),
-        panel.grid.major = element_blank()) 
-
-DistPlotAnn2
-
-# Disturbance Chrono: raw sample depth adding decadal histogram and kernel density estimation-------------------------------
+# Disturbance Chrono: raw sample depth, adding decadal histogram and kernel density estimation-------------------------------
 names(gr3)
 gr3hist <- gr3 %>% select(Site, year, Species, Release_type) %>% drop_na()
 
