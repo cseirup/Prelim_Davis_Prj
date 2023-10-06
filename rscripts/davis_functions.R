@@ -82,7 +82,8 @@ sample_fun_trees <- function(df, site){
                            select(Site, density_ha, BA_m2ha, biomass_Mgha, carbonmass_Mgha) %>% data.frame()
 }
 
-#Function to calcuate confidence intervals on bootstrap
+
+#Function to calculate confidence intervals on bootstrap
 bootCI <- function(df){
   boot_CI <- df %>% select(-Site)
   boot_CIs <- data.frame(t(apply(boot_CI, 2,
@@ -95,6 +96,8 @@ bootCI <- function(df){
   colnames(boot_CIs) <- c("lower95", "median", "upper95", "metric", "num_boots", "Site")
   print(boot_CIs)
 }
+
+
 #Function for having unlabeled tickmarks on graph axis
 every_nth <- function(x, nth, empty = TRUE, inverse = FALSE) 
 {
@@ -114,3 +117,82 @@ every_nth <- function(x, nth, empty = TRUE, inverse = FALSE)
     }
   }
 }
+
+
+#Species composition plotting functions
+
+#For making the tree plot
+Comptreeplot <- function(df, SiteCode, sp_group){ # df = data frame, Site = 2 letter site code, sp_group = value containing selected species for the site
+  df2 <- df %>% filter(Site == SiteCode & Species %in% sp_group) #%>% 
+               # mutate(Species = fct_reorder(Species, desc(BA_m2ha)))
+  ggplot(aes(x = Species, y = BA_m2ha, fill = SampleEventNum), data = df2)+
+    geom_col(position = position_dodge2(preserve = "single"))+
+    #xlab('Species')+
+    ylab(SiteCode)+ 
+    theme(axis.text = element_text(size = 9), # change axis label size
+          strip.text = element_text(size = 10), # change facet text size
+          axis.title.x = element_blank(), # change axis title size
+          axis.text.x = element_text(size = 10, face = "italic"),
+          #axis.title.y = element_blank(),
+          legend.position = "none")+
+    scale_x_discrete(labels = sp_names, guide = guide_axis(n.dodge=3))+
+    scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020s'), 
+                      values = c("1" = '#a1d99b', "2" = '#31a354'))+
+    theme_FHM() 
+}
+
+#For making the sapling plot
+Compsapplot <- function(df, SiteCode, sp_group){ # df = data frame, Site = 2 letter site code, sp_group = value containing selected species for the site
+  df2 <- df %>% filter(Site == SiteCode & Species %in% sp_group) #%>% 
+   # mutate(Species = fct_reorder(Species, desc(BA_m2ha)))
+  ggplot(aes(x = Species, y = BA_m2ha, fill = SampleEventNum), data = df2)+
+    geom_col(position = position_dodge2(preserve = "single"))+
+    #xlab('Species')+
+   # ylab(bquote('Basal area ('~m^2*'/ha)'))+ 
+    theme(axis.text = element_text(size = 9), # change axis label size
+          strip.text = element_text(size = 10), # change facet text size
+          axis.title.x = element_blank(), # change axis title size
+          axis.text.x = element_text(size = 10, face = "italic"),
+          axis.title.y = element_blank(),
+          legend.position = "none")+
+    scale_x_discrete(labels = sp_names, guide = guide_axis(n.dodge=3))+
+    scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020s'), 
+                      values = c("1" = '#a1d99b', "2" = '#31a354'))+
+    theme_FHM() 
+}
+
+#For making the seedling plot
+Compseedplot <- function(df, SiteCode, sp_group){ # df = data frame, SiteCode = 2 letter site code, sp_group = value containing selected species for the site
+  df2 <- df %>% filter(Site == SiteCode & Species %in% sp_group)# %>% 
+   # mutate(Species = fct_reorder(Species, desc(den_m2)))
+  ggplot(aes(x = Species, y = den_m2, fill = SampleEventNum), data = df2)+
+    geom_col(position = position_dodge2(preserve = "single"))+
+    theme(axis.text = element_text(size = 9), # change axis label size
+          strip.text = element_text(size = 10), # change facet text size
+          axis.title.x = element_blank(), # change axis title size
+          axis.text.x = element_text(size = 10, face = "italic"),
+          axis.title.y = element_blank(),
+          legend.text = element_text(size = 10),
+          legend.title = element_text(size = 10))+
+    scale_x_discrete(labels = sp_names, guide = guide_axis(n.dodge=3))+
+    scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020s'), 
+                      values = c("1" = '#a1d99b', "2" = '#31a354'))+
+    theme_FHM() 
+}
+
+#For ranking species composition by basal area
+rankBA <- function(df, SiteCode){ # df = data frame, SiteCode = 2 letter site code,
+  df %>% filter(Site == SiteCode & BA_m2ha>0 ) %>% 
+  group_by(Species, SampleEventNum) %>% 
+  summarize(BA_m2ha = sum(BA_m2ha)) %>% 
+  arrange(desc(BA_m2ha))
+}
+
+#For ranking species composition by basal area
+rankDEN <- function(df, SiteCode){ # df = data frame, SiteCode = 2 letter site code,
+  df %>% filter(Site == SiteCode & den_m2>0 ) %>% 
+    group_by(Species, SampleEventNum) %>% 
+    summarize(den_m2 = sum(den_m2)) %>% 
+    arrange(desc(den_m2))
+}
+
