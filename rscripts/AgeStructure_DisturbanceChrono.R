@@ -269,7 +269,7 @@ DistPlotWM
 
 #ggsave("../figures/GR_smdp_plotWM.jpg", DistPlotWM, height = 8, width = 8, dpi = 300)
 
-#Annual bins instead of decadel
+#
 #add grey shading when sample depth falls below 5 cores
 gr7 <- gr6 %>% group_by(Site) %>% filter(sample_depth < 5) %>% 
                                   mutate(XMAX = max(year),
@@ -277,9 +277,8 @@ gr7 <- gr6 %>% group_by(Site) %>% filter(sample_depth < 5) %>%
                                   select(3,10,11) %>% 
                                   unique()
 
+# Disturbance Chrono: Annual bins all sites -------------------------------
 gr8 <- gr6 %>% left_join(gr7, by = "Site")
-
-##################
 
 DistPlotAnn<-ggplot(gr8)+
   #geom_vline(aes(xintercept = year, color = "Sample Depth < 5"), data = gr7)+
@@ -305,59 +304,62 @@ DistPlotAnn
 
 #ggsave("../figures/GR_smdp_plot_annual.jpg", DistPlotAnn, height = 5, width = 10, dpi = 300)
 
+# Disturbance Chrono: raw sample depth -------------------------------
+coeff <- 10
+DistPlotAnn2<-ggplot(gr8)+
+  geom_vline(linetype = 2, show.legend = FALSE, data = gr8, aes(xintercept = XMAX,  color = "Sample Depth = 5"))+
+  #geom_rect(aes(ymax = 100, ymin = 0, xmin = XMIN, xmax = XMAX), fill="lightgrey", alpha = 0.5)+
+  geom_line(stat = "identity", linetype = 3, linewidth = .9, aes(x = year, y = sample_depth/coeff, color = "Sample Depth"))+
+  scale_colour_manual(values = c("black","darkgrey")) +
+  scale_linetype_manual(values = "dotted", "dashed")+
+  guides(colour = guide_legend(title = NULL, override.aes = list(linetype=c(3,2))))+
+  theme_bw()+
+  geom_bar(stat = 'identity', position = 'stack', aes(fill=Release_type, x=year, y=count))+
+  labs(x='Year')+ 
+  facet_wrap(~Site, ncol = 1, scales = "free")+
+  scale_x_continuous(n.breaks = 20)+
+  scale_fill_manual(values = c( "cornflowerblue","darkorange"), name = "Release type", labels = c("Gap recruit", "Growth release"))+ 
+  scale_y_continuous(name = "No. trees showing a disturbance", sec.axis = sec_axis(~.*coeff, name = "Sample Depth (no. cores)"))+
+  theme(axis.text.x=element_text(angle=45,hjust=1, size = 6), 
+        axis.ticks = element_line(),
+        axis.text.y = element_text(size = 8),
+        axis.title.y = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank()) 
 
+DistPlotAnn2
 
-#At temping base R plot
-#set.seed(25852)                             # Create example data
-#x <- rnorm(30)
-#y1 <- x + rnorm(30)
-#y2 <- x + rnorm(30, 5)
+# Disturbance Chrono: raw sample depth adding decadal histogram and kernel density estimation-------------------------------
+names(gr3)
+gr3hist <- gr3 %>% select(Site, year, Species, Release_type) %>% drop_na()
 
-#names(gr8)
-#grBC <- gr8 %>% filter(Site == "Blackwoods") %>% select(1,7,9)
+coeff <- 5
+DistPlotAnn2<-ggplot()+
+  geom_histogram(binwidth = 10, fill="lightgrey", color="#e9ecef", alpha=0.9, show.legend = FALSE, data = gr3hist, aes(x = year))+
+  geom_density(color="black", show.legend = FALSE, data = gr3hist, aes(x = year, y=10*after_stat(count)))+
+  geom_vline(linetype = 2, show.legend = FALSE, data = gr8, aes(xintercept = XMAX,  color = "Sample Depth = 5"))+
+  #geom_rect(aes(ymax = 100, ymin = 0, xmin = XMIN, xmax = XMAX), fill="lightgrey", alpha = 0.5)+
+  geom_line(data = All_smdp2,stat = "identity", linetype = 3, linewidth = .9, aes(x = year, y = sample_depth/coeff, color = "Sample Depth"))+
+    scale_colour_manual(values = c("black","darkgrey")) +
+    scale_linetype_manual(values = "dotted", "dashed")+
+  guides(colour = guide_legend(title = NULL, override.aes = list(linetype=c(3,2))))+
+  theme_bw()+
+  geom_bar(data=gr8, stat = 'identity', position = 'stack', aes(fill=Release_type, x=year, y=count))+
+    labs(x='Year')+ 
+    facet_wrap(~Site, ncol = 2, scales = "free")+
+  scale_x_continuous(n.breaks = 20)+
+  scale_fill_manual(values = c( "cornflowerblue","darkorange"), name = "Release type", labels = c("Gap recruit", "Growth release"))+ 
+  scale_y_continuous(name = "No. trees showing a disturbance", sec.axis = sec_axis(~.*coeff, name = "Sample Depth (no. cores)"))+
+  theme(axis.text.x=element_text(angle=45,hjust=1, size = 6), 
+        axis.ticks = element_line(),
+        axis.text.y = element_text(size = 8),
+        axis.title.y = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank()) 
 
-#par(mar = c(5, 4, 4, 4) + 0.3)              # Additional space for second y-axis
-#barplot(grBC$year, grBC$Per_gr, xlim = c(1750, 2022), ylim = c(0,100))              # Create first plot
-
-#par(new = TRUE)                             # Add new plot
-#plot(x, y2, pch = 17, col = 3,              # Create second plot without axes
-    # axes = FALSE, xlab = "", ylab = "")
-#axis(side = 4, at = pretty(range(y2)))      # Add second axis
-#mtext("y2", side = 4, line = 3)             # Add second axis label
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+DistPlotAnn2
 
 # Combining Pemetic Mtn PIRU and TSCA -------------------------------------
 
