@@ -144,14 +144,14 @@ ageAll$SampleEventNum <- as.character(ageAll$SampleEventNum)
 ageAll2 <- ageAll %>% mutate(speciesEvent = str_c(Species, SampleEventNum, sep = ""))
 # Plot Recruitment Age ---------------------------------------------------------
 custom_breaks <- seq(1720,2010,10)
-ageD<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent, ))+
+ageD<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent))+
   geom_bar()+
   scale_fill_manual(name = "Year/Species Cored", labels = c("1959 *Picea glauca*", '1959 *Picea rubens*', "2020s *Picea rubens*"), 
                     values = c("PIRU1" = '#b38e80', "PIRU2" = '#75abbd', "PIGL1"= '#b3b380'))+
   labs(x='Recruitment Decade', y='Number of Trees')+ 
   scale_x_binned(show.limits = TRUE, limits = c(1720, 2010), breaks = custom_breaks,
                  labels = every_nth(custom_breaks, 4, inverse = TRUE))+ 
-  facet_wrap(~Site, ncol = 4)+
+  facet_wrap(~Site, ncol = 4, scales = "free")+
   theme(axis.text.x=element_text(angle=30, hjust = 1, vjust = 1.1, size = 10), # change axis label size
         axis.text.y = element_text(size = 10), 
         strip.text = element_text(size = 12), # change facet text size
@@ -175,6 +175,7 @@ ageD<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent, ))+
   theme(legend.text = element_markdown())
 
 ageD
+
 
 #ageD_forjpeg<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent, ))+
   #geom_bar()+
@@ -225,51 +226,6 @@ gr5 <- left_join(All_smdp2, gr4, by = c("Site", "year"))
 #Express gap recruit and growth release counts as a percent of sample depth
 gr6 <- gr5 %>% mutate(Per_gr = (count/sample_depth)*100)
 
-#Releases binned decadaly
-DistPlot<-ggplot(gr5)+
-  geom_line(stat = "identity", linewidth = .7, color = "black", aes(x = year, y = sample_depth))+
-  theme_bw()+
-  geom_bar(stat = 'identity', position = 'stack', aes(fill=Release_type, x=year, y=count))+
-  labs(x='Growth releases', y='Number of trees')+ 
-  facet_wrap(~Site, ncol = 2, scales = "free")+
-  scale_x_binned(n.breaks = 20, nice.breaks = TRUE, limits = c(1740, 2022))+
-  #scale_y_continuous(limits = c(0,35))+
-  scale_fill_manual(values = c( "cornflowerblue","darkorange"), name = "Release type", labels = c("Gap recruit", "Growth release"))+ 
-  theme(axis.text.x=element_text(angle=45,hjust=1, size = 6), 
-        axis.ticks = element_line(),
-        axis.text.y = element_text(size = 8),
-        axis.title.y = element_text(size = 10),
-        axis.title.x = element_text(size = 10),
-        panel.grid.minor = element_blank(),
-        panel.grid.major = element_blank()) 
-
-DistPlot
-
-#ggsave("../figures/GR_smdp_plot.jpg", DistPlot, height = 8, width = 8, dpi = 300)
-
-#Just Western Mtn
-DistPlotWM <- gr5 %>% filter(Site == "Western Mtn") %>% ggplot()+
-  geom_line(stat = "identity", linewidth = .7, color = "black", aes(x = year, y = sample_depth))+
-  theme_bw()+
-  geom_bar(stat = 'identity', position = 'stack', aes(fill=Release_type, x=year, y=count))+
-  labs(x='Growth releases', y='Number of trees')+ 
-  facet_wrap(~Site, ncol = 1, scales = "free")+
-  scale_x_binned(n.breaks = 20, nice.breaks = TRUE, limits = c(1740, 2022))+
-  #scale_y_continuous(limits = c(0,35))+
-  scale_fill_manual(values = c( "cornflowerblue","darkorange"), name = "Release type", labels = c("Gap recruit", "Growth release"))+ 
-  theme(axis.text.x=element_text(angle=45,hjust=1, size = 6), 
-        axis.ticks = element_line(),
-        axis.text.y = element_text(size = 8),
-        axis.title.y = element_text(size = 10),
-        axis.title.x = element_text(size = 10),
-        panel.grid.minor = element_blank(),
-        panel.grid.major = element_blank()) 
-
-DistPlotWM
-
-#ggsave("../figures/GR_smdp_plotWM.jpg", DistPlotWM, height = 8, width = 8, dpi = 300)
-
-#
 #add grey shading when sample depth falls below 5 cores
 gr7 <- gr6 %>% group_by(Site) %>% filter(sample_depth < 5) %>% 
                                   mutate(XMAX = max(year),
@@ -336,7 +292,6 @@ DistPlotAnn2<-ggplot()+
 DistPlotAnn2
 
 # Combining Pemetic Mtn PIRU and TSCA -------------------------------------
-
 gr3.5 <- gr2 %>% left_join(Cores4, by = "Core_ID")
 gr3.5$Site <- recode(gr3.5$Site, "Pemetic Mtn TSCA" = "Pemetic Mtn")
 gr4.5<-gr3.5 %>% group_by(Site, year, Release_type) %>% summarize(count = n()) %>% drop_na()
@@ -358,7 +313,7 @@ gr5.5 <- left_join(All_smdp2.5, gr4.5, by = c("Site", "year"))
 #Express gap recruit and growth release counts as a percent of sample depth
 gr6.5 <- gr5.5 %>% mutate(Per_gr = (count/sample_depthPM)*100)
 
-#Annual bins instead of decadal
+#add grey shading when sample depth falls below 5 cores
 gr7.5 <- gr6.5 %>% group_by(Site) %>% filter(sample_depthPM < 5) %>% 
                                       mutate(XMAX = max(year),
                                              XMIN = min(year)) %>% 
@@ -390,7 +345,35 @@ DistAnnPMpool <-ggplot(gr8.5)+
 
 DistAnnPMpool
 
+#ggsave("./figures/GR_annual_pooledPM.jpg", DistAnnPMpool, height = 5, width = 10, dpi = 300)
 
-ggsave("./figures/GR_annual_pooledPM.jpg", DistAnnPMpool, height = 5, width = 10, dpi = 300)
+#Pooling TSCA in PM, same as DistPlotAnn2
 
+gr3.5hist <- gr3.5 %>% select(Site, year, Species, Release_type) %>% drop_na()
+coeff <- 5
+DistPlotPMPool2 <- ggplot()+
+  geom_histogram(binwidth = 10, fill="lightgrey", color="#e9ecef", alpha=0.9, show.legend = FALSE, data = gr3.5hist, aes(x = year))+
+  geom_density(color="black", show.legend = FALSE, data = gr3.5hist, aes(x = year, y=10*after_stat(count)))+
+  geom_vline(linetype = 2, show.legend = FALSE, data = gr8.5, aes(xintercept = XMAX,  color = "Sample Depth = 5"))+
+  geom_line(data = All_smdp2.5,stat = "identity", linetype = 3, linewidth = .9, aes(x = year, y = sample_depthPM/coeff, color = "Sample Depth"))+
+  scale_colour_manual(values = c("black","darkgrey")) +
+  scale_linetype_manual(values = "dotted", "dashed")+
+  guides(colour = guide_legend(title = NULL, override.aes = list(linetype=c(3,2))))+
+  theme_bw()+
+  geom_bar(data=gr8.5, stat = 'identity', position = 'stack', aes(fill=Release_type, x=year, y=count))+
+  labs(x='Year')+ 
+  facet_wrap(~Site, ncol = 2, scales = "free")+
+  scale_x_continuous(n.breaks = 20)+
+  scale_fill_manual(values = c( "cornflowerblue","darkorange"), name = "Release type", labels = c("Gap recruit", "Growth release"))+ 
+  scale_y_continuous(name = "No. trees showing a disturbance", sec.axis = sec_axis(~.*coeff, name = "Sample Depth (no. cores)"))+
+  theme(axis.text.x=element_text(angle=45,hjust=1, size = 6), 
+        axis.ticks = element_line(),
+        axis.text.y = element_text(size = 8),
+        axis.title.y = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.position = c(1,0),
+        legend.justification = c(1,0)) 
 
+DistPlotPMPool2

@@ -1,7 +1,7 @@
 ---
 title: "Ch1 exploratory figures subset"
 author: "Camilla Seirup"
-date: "2023-10-06"
+date: "2023-10-15"
 output: html_document
 ---
 ```{r setup, include=FALSE}
@@ -64,13 +64,6 @@ print(treesap_map)
 Figure 4. Tree stem map and sapling heat map combined. 
 
 
-```{r, echo=FALSE, fig.height= 10.6, fig.width=10.6}
-print(spComp3)
-```
-
-Figure 5. Change in tree species composition by site and developmental stage. Trees are live individuals >10 cm DBH. Saplings are live individuals >= 2.5 cm and < 10 cm DBH. Seedlings are established individuals <2.5 DBH.  In 2020s, established was defined as > 15cm tall. The 4 most abundant species per site, visit, and  developmental stage were included.
-
-
 ```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
 print(Box_den)
 ```
@@ -82,20 +75,61 @@ print(Box_BA)
 Figure 7. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the basal area calculated for the full plot are included. Only live trees >10cm.
 
 ```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
-print(Box_bio)
+#print(Box_bio) #Figure 8. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the biomass calculated for the full plot are included. Only live trees >10cm.
 ```
-Figure 8. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the biomass calculated for the full plot are included. Only live trees >10cm.
 
-```{r, echo=FALSE, out.height="100%", fig.height = 10.6, fig.width = 10.6, warning=FALSE}
-print(DistPlotAnn2)
+## Species composition figures
+
+```{r, echo=FALSE, fig.height= 10.6, fig.width=10.6}
+print(spComp3)
 ```
-Figure 9. Disturbance chronology. Orange and blue bars are disturbance signal by type per year. Grey bars are releases binned by decade. Solid black line is a kernel density function. Dotted black line is the sample depth. Vertical dashed gray line indicates the year the sample depth falls to five cores. 
+
+Figure 5. Change in tree species composition by site and developmental stage. Trees are live individuals >10 cm DBH. Saplings are live individuals >= 2.5 cm and < 10 cm DBH. Seedlings are established individuals <2.5 DBH.  In 2020s, established was defined as > 15cm tall. The 4 most abundant species per site, visit, and  developmental stage were included.
+
+```{r, echo=FALSE, fig.height= 10.6, fig.width=10.6}
+print(pTSS)
+```
+
+Figure #. Relative percent change in species composition in trees, saplings, seedlings across all sites. Percent change is in basal area per hectare for trees and saplings and seedlings is percent change in density per square meter. All species included.
+
+```{r, echo=FALSE, fig.height= 10.6, fig.width=10.6}
+print(pTSSgr)
+```
+
+Figure #. Relative percent change in species composition in trees, saplings, seedlings across all sites. Percent change is in basal area per hectare for trees and saplings and in density per square meter for seedlings. Less common species grouped.
+
+
+```{r, echo=FALSE, fig.width=10.6}
+print(pTreeSp)
+```
+Figure X. Tree species composition
+
+```{r, echo=FALSE, fig.width=10.6}
+print(pSapSp)
+```
+Figure X. Sapling species composition
+
+```{r, echo=FALSE, fig.width=10.6}
+print(pSeedSp)
+```
+Figure X. Seedling species composition
+
+##Dendro figures
 
 ```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
 print(ageD)
 ```
 Figure 10. Recruitment age distributions, including Davis cores.
 
+```{r, echo=FALSE, out.height="100%", fig.height = 10.6, fig.width = 10.6, warning=FALSE}
+print(DistPlotAnn2)
+```
+Figure 9a. Disturbance chronology. Orange and blue bars are disturbance signal by type per year. Grey bars are releases binned by decade. Solid black line is a kernel density function. Dotted black line is the sample depth. Vertical dashed gray line indicates the year the sample depth falls to five cores. 
+
+```{r, echo=FALSE, out.height="100%", fig.height = 10.6, fig.width = 10.6, warning=FALSE}
+print(DistPlotPMPool2)
+```
+Figure 9b. Disturbance chronology. Orange and blue bars are disturbance signal by type per year. Grey bars are releases binned by decade. Solid black line is a kernel density function. Dotted black line is the sample depth. Vertical dashed gray line indicates the year the sample depth falls to five cores. *PM TSCA pooled with PM PIRU*.
 
 ## Tables
 Table 1. Location description information for the seven sites included in the study.

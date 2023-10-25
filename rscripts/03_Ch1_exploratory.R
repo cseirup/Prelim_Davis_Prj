@@ -18,8 +18,8 @@ source("C:/01_NETN/Forest_Health/R_Dev/Prelim_Davis_Prj/rscripts/davis_functions
 QC_data_folder = "C:/01_NETN/Forest_Health/R_Dev/Davis_data" #location of QC'd datafiles
 files_list <- list.files(path = QC_data_folder, pattern="*.csv", full.names=TRUE) #read names of data files in folder
 files_list # review list in order to choose nicknames
-nicknames <- c("cwd", "events", "qd_ch", "seeds", "qd_sp", "rwlong", "saps", "seeds59", "soil_d",
-               "cores", "trees59", "trees59qmd", "trees","coreIDtrees", "mapped_ibuttons")#preferred names for each df
+nicknames <- c("cwd", "BrLi59", "events", "qd_ch", "seeds", "qd_sp", "rwlong", "saps", "seeds59", "soil_d",
+               "cores", "trees59", "trees59qmd", "trees","coreIDtrees", "ibutDAYall", "ibutMONall","ibutDAY2020", "ibutMON2020", "mapped_ibuttons")#preferred names for each df
 data <- files_list %>% map(read.csv) %>% set_names(nm = nicknames) #load datafiles into a list and rename with nicknames
 #list2env(data, envir = .GlobalEnv)
 
@@ -33,7 +33,7 @@ sp_names <- c('PIRU' = 'Picea rubens', 'PIGL' = 'Picea glauca', 'TSCA' = 'Tsuga 
               'ABBA' = "Abies balsamea", 'ACRU' = 'Acer rubrum', 'BEPA' = 'Betula papyrifera',
               'PIST' = 'Pinus strobus', 'BEAL' = 'Betula alleghaniensis', 'THOC' = 'Thuja occidentalis',
               'BECO' = 'Betula cordifolia', 'ACPE' = 'Acer pensylvanicum', 'AMELANCHIER' = 'Amelanchier spp', 
-              'ACSP' = 'Acer spicatum')
+              'ACSP' = 'Acer spicatum', 'SODE' = 'Sorbus decora', "PRPE" = 'Prunus pensylvanica')
 
 # Stem map ----------------------------------------------------------------
 list2env(data["trees"], envir = .GlobalEnv)
@@ -274,7 +274,8 @@ tree_dist_ha <- Comb_tree_event %>% select(-c(NumSubplots, SubplotArea, Module, 
          BA_m2ha = sum_BA_cm2/TotArea) %>% 
   mutate(log10stems_ha = log10(num_stems_ha)) %>% 
   select(Site, SiteName, SampleEventNum, SampleYear, 
-         size_class, num_stems_ha, BA_m2ha,log10stems_ha)
+         size_class, num_stems_ha, BA_m2ha,log10stems_ha) %>% 
+  filter(Site != "WP")
   
 
 # Plot diameter distribution comparison -----------------------------------
@@ -290,9 +291,9 @@ Comp_tree_dist_plot <- ggplot(data = tree_dist_ha, aes(color = SampleEventNum, x
         axis.text.x = element_text(angle = 60, hjust = 1),
         axis.title.y = element_text(margin = margin(r = 5)),
         legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12))+
-        #legend.position = c(1,0),
-        #legend.justification = c(1,0))+
+        legend.title = element_text(size = 12),
+        legend.position = c(1,0),
+        legend.justification = c(1,0))+
   scale_color_manual(name = "Year", labels = c("1" = '1959', "2" = '2020-2022'), 
                      values = c("1" = '#a1d99b', "2" = '#31a354'))+
   scale_x_discrete(labels= c('2.5-10','10-20',
@@ -441,7 +442,42 @@ SumTable_ha5 <- left_join(SumTable_ha4, cwd, by = "Site")
 
 SumTable_ha6 <- SumTable_ha5 %>% ungroup() %>% 
   mutate(vol_m3ha = round(vol_m3ha)) %>% 
-  select(-c("carbonmass_Mgha_2", "carbonmass_Mgha_1", "num_pieces","Site"))
+  select(-c("carbonmass_Mgha_2", "carbonmass_Mgha_1", "num_pieces"))
+
+#adding bryophyte/lichen
+list2env(data["qd_ch"], envir = .GlobalEnv)
+CoverClasses <- data.frame("Cover" = 0:9, 
+                        cClasses = c("0", "<1", "1-2", "2-5", "5-10", "10-25", "25-50",
+                                     "50-75", "75-95", "95-100"),
+                        cMidpoints = c("0", "0.5", "1.5", "3.5", "7.5", "17.5", "37.5",
+                                       "62.5", "87.5", "97.5"))
+
+qd_ch2 <- left_join(qd_ch, CoverClasses, by = "Cover")
+qd_ch2$cMidpoints <- as.numeric(qd_ch2$cMidpoints)
+str(qd_ch2)
+#add lichen, ns spagnum bryophite, and sphaghum together per quad
+BryLic <- qd_ch2 %>% filter(Character == "Lichen" | Character == "Sphagnum"| Character == "NS Bryophyte") %>% 
+                     group_by(Site, SampleEventNum, Quadrat_Num) %>% 
+                     summarise(BryLicCov = sum(cMidpoints),
+                               n = n())
+
+#Summarize by Site
+BryLic2 <- BryLic %>% group_by(Site, SampleEventNum) %>% 
+                      summarise(avgBryLicCov = sum(BryLicCov)/n(),
+                      num_quads = n(),
+                      se_cov = sd(BryLicCov)/sqrt(n()),
+                      sd_cover = sd(BryLicCov))
+                               
+SumTable_ha7 <- left_join(SumTable_ha6, select(BryLic2, avgBryLicCov), by = "Site")
+
+#1959 mosses and lichen
+list2env(data["BrLi59"], envir = .GlobalEnv)
+
+BrLi59sum <- BrLi59 %>% group_by(Site) %>% summarise(BriLicCov = sum(Cover))
+names(BrLi59sum)
+names(SumTable_ha7)
+
+SumTable_ha8 <- left_join(SumTable_ha7, BrLi59sum, by = "Site")
 
 kable(SumTable_ha6)
 #write.csv(Comb_sum_table, './tables/Summary_metrics1959_2020_2.5.csv', row.names = FALSE)
@@ -474,7 +510,7 @@ tree_sp_ha <- Comb_tree_event %>% filter(size_class != "d2.5_9.9") %>%
                                     select(Site, SiteName, SampleEventNum, SampleYear, 
                                            Species, num_stems_ha, BA_m2ha) 
 
-#Fill in zeros for missing species detections (for better plotting)
+#Fill in zeros for missing species detentions (for better plotting)
 tree_sp_ha2 <- tree_sp_ha %>% select(-num_stems_ha) %>% pivot_wider(names_from = Species, values_from = BA_m2ha, values_fill = 0)
 tree_sp_haC <- tree_sp_ha2 %>% pivot_longer(cols = ABBA:BECO, names_to = "Species", values_to = "BA_m2ha")
 
@@ -519,16 +555,16 @@ seedsC <- seeds4w %>% pivot_longer(cols = 4:13, names_to = "Species", values_to 
 table(seedsC$Species)
 
 #setting species order for all plots for consitency
-tree_sp_haC$Species <- ordered(tree_sp_haC$Species,
-                               levels = c("PIRU", "PIGL", "ABBA", "TSCA", "AMELANCHIER", 
-                                          "BEPA", "ACRU", "ACPE", "THOC", "PIST", "BECO", "BEAL"))
-sap_sp_haC$Species <- ordered(sap_sp_haC$Species,
-                               levels = c("PIRU", "PIGL", "ABBA", "TSCA", "AMELANCHIER", 
-                                          "BEPA", "ACRU", "ACPE", "THOC", "BECO", "ACSP","PRPE","SODE"))
+#tree_sp_haC$Species <- ordered(tree_sp_haC$Species,
+                               #levels = c("PIRU", "PIGL", "ABBA", "TSCA", "AMELANCHIER", 
+                                          #"BEPA", "ACRU", "ACPE", "THOC", "PIST", "BECO", "BEAL"))
+#sap_sp_haC$Species <- ordered(sap_sp_haC$Species,
+                               #levels = c("PIRU", "PIGL", "ABBA", "TSCA", "AMELANCHIER", 
+                                         # "BEPA", "ACRU", "ACPE", "THOC", "BECO", "ACSP","PRPE","SODE"))
 
-seedsC$Species <- ordered(seedsC$Species,
-                              levels = c("Picea rubens", "Picea glauca", "Abies balsamea", "Tsuga canadensis", "Amelanchier", 
-                                         "Acer rubrum", "Acer pensylvanicum ", "Pinus strobus", "Sorbus decora"))
+#seedsC$Species <- ordered(seedsC$Species,
+                              #levels = c("Picea rubens", "Picea glauca", "Abies balsamea", "Tsuga canadensis", "Amelanchier", 
+                                        # "Acer rubrum", "Betula papyrifera", "Acer pensylvanicum", "Pinus strobus", "Sorbus decora"))
 ###Beech Mtn####: doing each site separately so species selection is customized
 #trees
 rankBA(tree_sp_haC, "BM")
@@ -557,30 +593,6 @@ pBM_seed
 #trees
 rankBA(tree_sp_haC, "PM")
 PM_tr <- c("PIRU","TSCA", "BEPA", "ACRU", "PIST") # top 4 for each visit, only kicking out ABBA
-#saps
-rankBA(sap_sp_haC, "PM")
-PM_sp <- c("PIRU", "ACRU","TSCA","ACPE") #top 4 for each visit, doesn't kick anything out
-#seeds
-rankDEN(seedsC, "PM")
-sp_names
-PM_sd <- c("Picea rubens", "Betula papyrifera","Tsuga canadensis","Acer pensylvanicum") #top 4 for each visit, doesn't kick anything out
-
-#PM tree plot
-pPM_tree <- Comptreeplot(tree_sp_haC, "PM", PM_tr)
-pPM_tree
-
-#PM sap plot
-pPM_sap <- Compsapplot(sap_sp_haC, "PM", PM_sp)
-pPM_sap
-
-#PM seed plot
-pPM_seed <- Compseedplot(seedsC, "PM", PM_sd)
-pPM_seed
-
-####Pemetic Mtn###
-#trees
-rankBA(tree_sp_haC, "PM")
-PM_tr <- c("PIRU","TSCA", "BEPA", "ACRU", "PIST") # top 4 for each visit, didn't kick any out
 #saps
 rankBA(sap_sp_haC, "PM")
 PM_sp <- c("PIRU", "ACRU","TSCA","ACPE") #top 4 for each visit, doesn't kick anything out
@@ -759,6 +771,202 @@ theme(plot.tag = element_text(size = rel(1.5)),
       plot.tag.position = "bottom")
 spComp3
 
+#Attempting staggered grouped bar plots
+#Trees
+BET_spp <- c("BEAL", "BECO", "BEPA")
+LOWCAN <- c("ACPE", "ACSP", "AMELANCHIER", "PRPE", "SODE")
+OTHCON <-c("PIST","THOC")
+
+tree_sp_haB <- tree_sp_ha %>% filter(Site != "WP") %>% 
+                  mutate(sppgrp = case_when(Species %in% BET_spp ~ paste0("Betula spp"),
+                                            Species %in% LOWCAN ~ paste0("Low canopy spp"),
+                                            Species %in% OTHCON ~ paste0("Other conifer spp"),
+                                        TRUE ~ paste0(Species)))
+
+tree_sp_haB$sppgrp <- ordered(tree_sp_haB$sppgrp,
+                             levels = c("PIRU", "PIGL", "ABBA", "TSCA", "ACRU", "Betula spp",
+                                        "Other conifer spp", "Low canopy spp"))
+
+pTreeSp <- tree_sp_haB %>% filter(Site != "WP") %>% 
+          ggplot(aes(x = SampleEventNum, y = BA_m2ha, fill = sppgrp))+
+              geom_col(position = position_stack(reverse = TRUE))+
+              facet_wrap(~Site, ncol = 7, labeller = as_labeller(site_names))+
+          scale_fill_brewer(type="div")+
+            theme_FHM()
+
+ pTreeSp 
+  
+#Saps
+table(sap_sp_ha$Species)
+sap_sp_haB <- sap_sp_ha %>% filter(Site != "WP") %>% 
+   mutate(sppgrp = case_when(Species %in% BET_spp ~ paste0("Betula spp"),
+                             Species %in% LOWCAN ~ paste0("Low canopy spp"),
+                             Species %in% OTHCON ~ paste0("Other conifer spp"),
+                             TRUE ~ paste0(Species)))
+ 
+sap_sp_haB$sppgrp <- ordered(sap_sp_haB$sppgrp,
+                               levels = c("PIRU", "PIGL", "ABBA", "TSCA", "ACRU", "Betula spp",
+                                          "Other conifer spp", "Low canopy spp"))
+ 
+ pSapSp <- sap_sp_haB %>% filter(Site != "WP") %>% 
+   ggplot(aes(x = SampleEventNum, y = BA_m2ha, fill = sppgrp))+
+   geom_col(position = position_stack(reverse = TRUE))+
+   facet_wrap(~Site, ncol = 7, labeller = as_labeller(site_names))+
+   scale_fill_brewer(type="div")+
+   theme_FHM()
+ 
+ pSapSp 
+   
+ #Seeds
+ table(seeds4$Latin_name)
+sBET_spp <- c("Betula papyrifera")
+sLOWCAN <- c("Acer pensylvanicum","Amelanchier","Sorbus decora")
+sOTHCON <-c("Pinus strobus")
+ 
+seed_sp_haB <- seeds4 %>% filter(Site != "WP") %>% 
+  mutate(sppgrp = case_when(Latin_name %in% sBET_spp ~ paste0("Betula spp"),
+                            Latin_name %in% sLOWCAN ~ paste0("Low canopy spp"),
+                            Latin_name %in% sOTHCON ~ paste0("Other conifer spp"),
+                            TRUE ~ paste0(Latin_name)))
+
+seed_sp_haB$sppgrp <- ordered(seed_sp_haB$sppgrp,
+                             levels = c("Picea rubens", "Picea glauca", "Abies balsamea", "Tsuga canadensis", "Acer rubrum", "Betula spp",
+                                        "Other conifer spp", "Low canopy spp"))
+
+pSeedSp <- seed_sp_haB %>% filter(Site != "WP") %>% 
+  ggplot(aes(x = SampleEventNum, y = den_m2, fill = sppgrp))+
+  geom_col(position = position_stack(reverse = TRUE))+
+  facet_wrap(~Site, ncol = 7, labeller = as_labeller(site_names))+
+  scale_fill_brewer(type="div")+
+  theme_FHM()
+
+pSeedSp 
+
+#Plotting percent relative change in composition: Use __C dataset with added zeros: tree_sp_haC, sap_sp_haC, seedsC
+#Calculate total BA/density per site and divide to get % BA by species per visit
+#Trees
+tree_sp_haC2 <- tree_sp_haC %>% group_by(Site, SampleEventNum) %>% summarise(Tot_BA = sum(BA_m2ha)) 
+
+tree_sp_haC3 <- left_join(tree_sp_haC, tree_sp_haC2, by = c("Site", "SampleEventNum"))
+
+tree_sp_haC4 <- tree_sp_haC3 %>% mutate(Rel_BA = BA_m2ha/Tot_BA) %>% 
+                                 mutate(stage = "Tree") %>% 
+  filter(Site != "WP")
+                                 
+tree_sp_haC5 <- tree_sp_haC4 %>% select(-c(BA_m2ha, Tot_BA, SampleYear)) %>% 
+                                 pivot_wider(names_from = SampleEventNum, values_from = Rel_BA) %>% 
+                                 select("Site", "Species", "stage", "1","2") %>% droplevels()
+                              
+#Saps                 
+sap_sp_haC2 <- sap_sp_haC %>% group_by(Site, SampleEventNum) %>% summarise(Tot_BA = sum(BA_m2ha))
+
+sap_sp_haC3 <- left_join(sap_sp_haC, sap_sp_haC2, by = c("Site", "SampleEventNum"))
+
+sap_sp_haC4 <- sap_sp_haC3 %>% mutate(Rel_BA = BA_m2ha/Tot_BA) %>% 
+  mutate(stage = "Sapling")%>% 
+  filter(Site != "WP")
+
+sap_sp_haC5 <- sap_sp_haC4 %>% select(-c(BA_m2ha, Tot_BA, SampleYear)) %>% 
+                                pivot_wider(names_from = SampleEventNum, values_from = Rel_BA)%>% 
+                                select("Site", "Species", "stage", "1","2") %>% droplevels()
+
+#Seeds
+seedsC2 <- seedsC %>% group_by(Site, SampleEventNum) %>% summarise(Tot_den = sum(den_m2))
+
+seedsC3 <- left_join(seedsC, seedsC2, by = c("Site", "SampleEventNum"))
+
+seedsC4 <- seedsC3 %>% mutate(Rel_den = den_m2/Tot_den) %>% 
+  mutate(stage = "Seedling")%>% 
+  filter(Site != "WP")
+
+seedsC5 <- seedsC4 %>% select(-c(den_m2, Tot_den, SampleYear)) %>% 
+  pivot_wider(names_from = SampleEventNum, values_from = Rel_den) %>% 
+  select("Site", "Species", "stage", "1","2") %>% droplevels()
+
+seedsC5$Species <- recode(seedsC5$Species, 'Picea rubens' = "PIRU")
+seedsC5$Species <- recode(seedsC5$Species, "Picea glauca" = "PIGL")
+seedsC5$Species <- recode(seedsC5$Species, "Abies balsamea" = "ABBA")
+seedsC5$Species <- recode(seedsC5$Species, "Tsuga canadensis" = "TSCA")
+seedsC5$Species <- recode(seedsC5$Species, "Amelanchier" = "AMELANCHIER")
+seedsC5$Species <- recode(seedsC5$Species, "Acer rubrum" = "ACRU")
+seedsC5$Species <- recode(seedsC5$Species, "Betula papyrifera" = "BEPA")
+seedsC5$Species <- recode(seedsC5$Species, "Acer pensylvanicum" = "ACPE")
+seedsC5$Species <- recode(seedsC5$Species, "Pinus strobus" = "PIST")
+seedsC5$Species <- recode(seedsC5$Species, "Sorbus decora" = "SODE")
+
+#Then combine trees/saps/seeds and subtract 1 - 2 to get % change
+TSScomb <- rbind(tree_sp_haC5, sap_sp_haC5, seedsC5)
+TSScomb2 <- TSScomb %>% rename(Sample1 = "1") %>% rename(Sample2 = "2") %>% 
+                        mutate(perRelDiff = Sample2 - Sample1)# %>% 
+                        #filter(perRelDiff != 0)
+
+#Fill in zeros for missing species detentions (for better plotting)
+TSScomb2w <- TSScomb2 %>% select(-c(Sample1, Sample2)) %>%  
+                          pivot_wider(names_from = stage, values_from = perRelDiff, values_fill = 0) %>% 
+                          mutate(sum = Tree+Sapling+Seedling) %>% 
+                          filter(sum != 0)
+
+TSScomb3 <- TSScomb2w %>% select(-c(sum)) %>% pivot_longer(cols = 3:5, names_to = "stage", values_to = "perRelDiff")
+TSScomb3$stage <- ordered(TSScomb3$stage,levels = c("Tree", "Sapling", "Seedling"))
+TSScomb3all <- TSScomb3
+TSScomb3gr <- TSScomb3
+#plotting
+#all species
+TSScomb3all$Species <- ordered(TSScomb3all$Species,
+                              levels = c("PIRU", "PIGL", "ABBA", "TSCA", "ACRU", "BEAL","BECO", "BEPA",
+                                         "PIST","THOC", "ACPE", "ACSP", "AMELANCHIER", "PRPE", "SODE"))
+
+pTSS <- TSScomb3all %>% 
+  ggplot(aes(x = Species, y = perRelDiff*100, group = stage, fill = stage))+
+  geom_col(position = position_dodge2())+
+  facet_wrap(~Site, ncol = 2, labeller = as_labeller(site_names), scales = "free_x")+
+  geom_hline(yintercept = 0)+
+  scale_fill_manual(name = "Stage", 
+                    values = c("Seedling" = "#e5f5e0", "Sapling" = '#a1d99b', "Tree" = '#31a354'))+
+  theme(legend.position = c(1,0),
+        legend.justification = c(1,0),
+        axis.text.x = element_text(face = "italic"))+
+  scale_x_discrete(labels = sp_names, guide = guide_axis(n.dodge=2))+
+  ylab(bquote('% Relative Change'))+ 
+  theme_FHM()
+
+pTSS
+
+#less common species grouped
+BET_spp <- c("BEAL", "BECO", "BEPA")
+LOWCAN <- c("ACPE", "ACSP", "AMELANCHIER", "PRPE", "SODE")
+OTHCON <-c("PIST","THOC")
+
+TSScomb3gr2 <- TSScomb3gr %>% mutate(sppgrp = case_when(Species %in% BET_spp ~ paste0("Betula spp"),
+                            Species %in% LOWCAN ~ paste0("Low canopy spp"),
+                            Species %in% OTHCON ~ paste0("Other conifer spp"),
+                            TRUE ~ paste0(Species)))
+
+TSScomb3gr2$sppgrp <- ordered(TSScomb3gr2$sppgrp,
+                              levels = c("PIRU", "PIGL", "ABBA", "TSCA", "ACRU", "Betula spp",
+                                         "Other conifer spp", "Low canopy spp"))
+names(TSScomb3gr2)
+TSScomb3gr3 <- TSScomb3gr2 %>% group_by(Site, stage, sppgrp) %>% 
+                               summarize(tot_diff = sum(perRelDiff))
+
+
+pTSSgr <- TSScomb3gr3 %>% 
+  ggplot(aes(x = sppgrp, y = tot_diff*100, group = stage, fill = stage))+
+  geom_col(position = position_dodge2())+
+  facet_wrap(~Site, ncol = 2, labeller = as_labeller(site_names), scales = "free_x")+
+  geom_hline(yintercept = 0)+
+  scale_fill_manual(name = "Stage", 
+                    values = c("Seedling" = "#e5f5e0", "Sapling" = '#a1d99b', "Tree" = '#31a354'))+
+  theme(legend.position = c(1,0),
+        legend.justification = c(1,0),
+        axis.text.x = element_text(face = "italic"))+
+  xlab('Species')+
+  ylab(bquote('% Relative Change'))+
+  scale_x_discrete(labels = sp_names, guide = guide_axis(n.dodge=2))+
+  theme_FHM()
+
+pTSSgr
+#have to add zeros and change colors
 
 # Bootstrapping trees -----------------------------------------------------
 
