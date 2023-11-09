@@ -1,3 +1,4 @@
+#install.packages("ggpattern")
 # Dendrochronology packages
 library(dplR)
 #library(treeclim)
@@ -7,6 +8,7 @@ library(forestNETN)
 #install.packages("ggtext")
 library(ggplot2)
 library(ggtext)
+library(ggpattern)
 
 source("C:/01_NETN/Forest_Health/R_Dev/Prelim_Davis_Prj/rscripts/davis_functions.R")
 # Load data ---------------------------------------------------------------
@@ -137,11 +139,17 @@ d_age <- dCores %>% mutate(year = last-first+1) %>% mutate(r_year = first) %>%
                         mutate(r_age = year) %>% drop_na() %>% 
                         mutate(SampleEventNum = 1)
 
+table(d_age$Site)
 
 #combine 1959 and 2020s core info
 ageAll <- rbind(age2, d_age)
 ageAll$SampleEventNum <- as.character(ageAll$SampleEventNum)
 ageAll2 <- ageAll %>% mutate(speciesEvent = str_c(Species, SampleEventNum, sep = ""))
+
+ageAll2$Site <- ordered(ageAll2$Site,
+                                levels = c("Bass Harbor Head", "Otter Point", 
+                                           "Beech Mtn", "Blackwoods", "Pemetic Mtn", 
+                                           "Ironbound Island", "Western Mtn"))
 # Plot Recruitment Age ---------------------------------------------------------
 custom_breaks <- seq(1720,2010,10)
 ageD<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent))+
@@ -149,7 +157,7 @@ ageD<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent))+
   scale_fill_manual(name = "Year/Species Cored", labels = c("1959 *Picea glauca*", '1959 *Picea rubens*', "2020s *Picea rubens*"), 
                     values = c("PIRU1" = '#b38e80', "PIRU2" = '#75abbd', "PIGL1"= '#b3b380'))+
   labs(x='Recruitment Decade', y='Number of Trees')+ 
-  scale_x_binned(show.limits = TRUE, limits = c(1720, 2010), breaks = custom_breaks,
+  scale_x_binned(show.limits = TRUE, limits = c(1720, 2000), breaks = custom_breaks,
                  labels = every_nth(custom_breaks, 4, inverse = TRUE))+ 
   facet_wrap(~Site, ncol = 4, scales = "free")+
   theme(axis.text.x=element_text(angle=30, hjust = 1, vjust = 1.1, size = 10), # change axis label size
@@ -176,39 +184,48 @@ ageD<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent))+
 
 ageD
 
+#with pattern
+custom_breaks <- seq(1720,2010,10)
+ageDp <- ggplot(ageAll2, aes(x=r_year, fill = SampleEventNum, pattern = Species))+
+  geom_bar_pattern(color = "black", 
+                   pattern_fill = "black",
+                   pattern_angle = 45,
+                   pattern_density = 0.1,
+                   pattern_spacing = 0.025,
+                   pattern_key_scale_factor = 0.6)+
+  scale_pattern_manual(name = "Species", labels = c("*Picea glauca*", '*Picea rubens*'), 
+                    values = c("PIRU" = 'none', "PIGL"= 'stripe'))+
+  scale_fill_manual(name = "Year cored", labels = c("1959", '2020s'),
+                    values = c("1" = '#a1d99b', "2" = '#31a354')) +
+  labs(x='Recruitment Decade', y='Number of Trees')+ 
+  scale_x_binned(show.limits = TRUE, limits = c(1720, 2010), breaks = custom_breaks,
+                 labels = every_nth(custom_breaks, 4, inverse = TRUE))+ 
+  facet_wrap(~Site, ncol = 4, scales = "free")+
+  guides(pattern = guide_legend(override.aes = list(fill = "white")),
+         fill=guide_legend(override.aes=list(pattern="none")))+
+  theme(axis.text.x=element_text(angle=30, hjust = 1, vjust = 1.1, size = 10), # change axis label size
+        axis.text.y = element_text(size = 10), 
+        strip.text = element_text(size = 12), # change facet text size
+        axis.title = element_text(size = 12), # change axis title size
+        axis.title.y = element_text(margin = margin(r = 5)),
+        legend.text = element_text(size = 10),
+        legend.title = element_text(size = 10),
+        legend.position = c(1,0),
+        legend.justification = c(1,0),
+        panel.grid.major = element_blank(), #indented from theme_FHM()
+        panel.grid.minor = element_blank(),
+        panel.background = element_rect(color = '#696969', fill = 'white', size = 0.4),
+        plot.background = element_blank(),
+        strip.background = element_rect(color = '#696969', fill = 'grey90', size = 0.4),
+        legend.key = element_blank(),
+        axis.line.x = element_line(color = "#696969", size = 0.2),
+        axis.line.y = element_line(color = "#696969", size = 0.2),
+        axis.ticks.y = element_line(color = "#696969", size = 0.7),
+        axis.ticks.x = element_line(color = "#696969", size = 0.3),
+        axis.ticks.length.x = unit(.15, "cm"))+
+  theme(legend.text = element_markdown())
 
-#ageD_forjpeg<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent, ))+
-  #geom_bar()+
-  #scale_fill_manual(name = "Year/Species Cored", labels = c("1959 *Picea glauca*", '1959 *Picea rubens*', "2020s *Picea rubens*"), 
-                     #values = c("PIRU1" = '#b38e80', "PIRU2" = '#75abbd', "PIGL1"= '#b3b380'))+
-  #labs(x='Recruitment Decade', y='Number of Trees')+ 
-  #scale_x_binned(show.limits = TRUE, limits = c(1720, 2010), breaks = custom_breaks,
-                # labels = every_nth(custom_breaks, 4, inverse = TRUE))+ 
-  #facet_wrap(~Site, ncol = 4)+
- # theme(axis.text.x=element_text(angle=30, hjust = 1, vjust = 1.4, size = 3), # change axis label size
-     #   axis.text.y = element_text(size = 4), 
-      #  strip.text = element_text(size = 6), # change facet text size
-       # axis.title = element_text(size = 7), # change axis title size
-        #axis.title.y = element_text(margin = margin(r = 5)),
-        #legend.text = element_text(size = 5),
-        #legend.title = element_text(size = 5),
-        #legend.position = c(1,0),
-        #legend.justification = c(1,0),
-         # panel.grid.major = element_blank(), #indented from theme_FHM()
-          #panel.grid.minor = element_blank(),
-          #panel.background = element_rect(color = '#696969', fill = 'white', size = 0.4),
-          #plot.background = element_blank(),
-          #strip.background = element_rect(color = '#696969', fill = 'grey90', size = 0.4),
-          #legend.key = element_blank(),
-          #axis.line.x = element_line(color = "#696969", size = 0.2),
-          #axis.line.y = element_line(color = "#696969", size = 0.2),
-          #axis.ticks.y = element_line(color = "#696969", size = 0.2),
-          #axis.ticks.x = element_line(color = "#696969", size = 0.15),
-          #axis.ticks.length.x = unit(.05, "cm"))+
-  #theme(legend.text = element_markdown())
-
-#ageD_forjpeg
-#ggsave(file="./figures/AgeDist_comb_event_species2.jpg", ageD_forjpeg, dpi=300, width=5, height=3, units='in')
+ageDp
 
 # Combine and Plot Disturbance Chronology------------------------------------------------------------
 gr3 <- gr2 %>% left_join(Cores4, by = "Core_ID")
@@ -236,58 +253,59 @@ gr7 <- gr6 %>% group_by(Site) %>% filter(sample_depth < 5) %>%
 # Disturbance Chrono: Annual bins all sites -------------------------------
 gr8 <- gr6 %>% left_join(gr7, by = "Site")
 
-DistPlotAnn<-ggplot(gr8)+
-  #geom_vline(aes(xintercept = year, color = "Sample Depth < 5"), data = gr7)+
-  geom_rect(aes(ymax = 100, ymin = 0, xmin = XMIN, xmax = XMAX), fill="lightgrey", alpha = 0.5)+
-  geom_line(stat = "identity", linetype = "dotted", linewidth = .9, aes(x = year, y = Per_sd, color = "% of Sample Depth"))+
-  scale_colour_manual(values = c("black","grey")) +
-  guides(colour = guide_legend(title = NULL))+
-  theme_bw()+
-  geom_bar(stat = 'identity', position = 'stack', aes(fill=Release_type, x=year, y=Per_gr))+
-  labs(x='Year', y='Percent of trees showing a disturbance')+ 
-  facet_wrap(~Site, ncol = 4, scales = "free")+
-  scale_x_continuous(n.breaks = 20)+
-  scale_fill_manual(values = c( "cornflowerblue","darkorange"), name = "Release type", labels = c("Gap recruit", "Growth release"))+ 
-  theme(axis.text.x=element_text(angle=45,hjust=1, size = 6), 
-        axis.ticks = element_line(),
-        axis.text.y = element_text(size = 8),
-        axis.title.y = element_text(size = 10),
-        axis.title.x = element_text(size = 10),
-        panel.grid.minor = element_blank(),
-        panel.grid.major = element_blank()) 
-
-DistPlotAnn
-
-#ggsave("../figures/GR_smdp_plot_annual.jpg", DistPlotAnn, height = 5, width = 10, dpi = 300)
-
 # Disturbance Chrono: raw sample depth, adding decadal histogram and kernel density estimation-------------------------------
 names(gr3)
-gr3hist <- gr3 %>% select(Site, year, Species, Release_type) %>% drop_na()
+gr3hist <- gr3 %>% select(Site, year, Species, Release_type) %>% drop_na() %>% filter(Site != "Pemetic Mtn TSCA")
+gr8_noTSCA <- gr8 %>% filter(Site != "Pemetic Mtn TSCA")
+All_smdp2_noTSCA <- All_smdp2 %>% filter(Site != "Pemetic Mtn TSCA")
 
+gr8_noTSCA$Site <- ordered(gr8_noTSCA$Site,
+                        levels = c(  "Blackwoods", "Bass Harbor Head",
+                                     "Pemetic Mtn",  "Otter Point",
+                                    "Beech Mtn", "Western Mtn",
+                                    "Ironbound Island"))
+gr3hist$Site <- ordered(gr3hist$Site,
+                           levels = c(  "Blackwoods", "Bass Harbor Head",
+                                        "Pemetic Mtn",  "Otter Point",
+                                        "Beech Mtn", "Western Mtn",
+                                        "Ironbound Island"))
+All_smdp2_noTSCA$Site <- ordered(All_smdp2_noTSCA$Site,
+                        levels = c(  "Blackwoods", "Bass Harbor Head",
+                                     "Pemetic Mtn",  "Otter Point",
+                                     "Beech Mtn", "Western Mtn",
+                                     "Ironbound Island"))
 coeff <- 5
 DistPlotAnn2<-ggplot()+
-  geom_histogram(binwidth = 10, fill="lightgrey", color="#e9ecef", alpha=0.9, show.legend = FALSE, data = gr3hist, aes(x = year))+
-  geom_density(color="black", show.legend = FALSE, data = gr3hist, aes(x = year, y=10*after_stat(count)))+
-  geom_vline(linetype = 2, show.legend = FALSE, data = gr8, aes(xintercept = XMAX,  color = "Sample Depth = 5"))+
-  #geom_rect(aes(ymax = 100, ymin = 0, xmin = XMIN, xmax = XMAX), fill="lightgrey", alpha = 0.5)+
-  geom_line(data = All_smdp2,stat = "identity", linetype = 3, linewidth = .9, aes(x = year, y = sample_depth/coeff, color = "Sample Depth"))+
-    scale_colour_manual(values = c("black","darkgrey")) +
-    scale_linetype_manual(values = "dotted", "dashed")+
+  geom_histogram(binwidth = 10, fill="lightgrey", color="#e9ecef", alpha=0.9, 
+                 show.legend = FALSE, data = gr3hist, aes(x = year))+
+  geom_density(color="black", show.legend = FALSE, data = gr3hist, 
+               aes(x = year, y=10*after_stat(count)))+
+  geom_vline(linetype = 2, show.legend = FALSE, data = gr8_noTSCA, 
+             aes(xintercept = XMAX,  color = "Sample Depth = 5"))+
+  geom_line(data = All_smdp2_noTSCA, stat = "identity", linetype = 3, linewidth = .9, 
+            aes(x = year, y = sample_depth/coeff, color = "Sample Depth"))+
+  scale_colour_manual(values = c("black","darkgrey")) +
+  scale_linetype_manual(values = "dotted", "dashed")+
   guides(colour = guide_legend(title = NULL, override.aes = list(linetype=c(3,2))))+
   theme_bw()+
-  geom_bar(data=gr8, stat = 'identity', position = 'stack', aes(fill=Release_type, x=year, y=count))+
+  geom_bar(data=gr8_noTSCA, stat = 'identity', position = 'stack', show.legend = FALSE,
+           aes(fill=Release_type, x=year, y=count))+
     labs(x='Year')+ 
     facet_wrap(~Site, ncol = 2, scales = "free")+
-  scale_x_continuous(n.breaks = 20)+
-  scale_fill_manual(values = c( "cornflowerblue","darkorange"), name = "Release type", labels = c("Gap recruit", "Growth release"))+ 
-  scale_y_continuous(name = "No. trees showing a disturbance", sec.axis = sec_axis(~.*coeff, name = "Sample Depth (no. cores)"))+
-  theme(axis.text.x=element_text(angle=45,hjust=1, size = 6), 
+  scale_x_continuous(limits = c(1740, 2010), breaks = custom_breaks,
+                 labels = every_nth(custom_breaks, 2, inverse = TRUE))+ 
+  scale_fill_manual(values = c( "cornflowerblue","cornflowerblue"))+ 
+  scale_y_continuous(name = "No. trees showing a disturbance", 
+                     sec.axis = sec_axis(~.*coeff, name = "Sample Depth (no. cores)"))+
+  theme(axis.text.x=element_text(angle=45,hjust=1, size = 8), 
         axis.ticks = element_line(),
         axis.text.y = element_text(size = 8),
         axis.title.y = element_text(size = 10),
         axis.title.x = element_text(size = 10),
         panel.grid.minor = element_blank(),
-        panel.grid.major = element_blank()) 
+        panel.grid.major = element_blank(),
+        legend.position = c(1,0),
+          legend.justification = c(1,0)) 
 
 DistPlotAnn2
 
