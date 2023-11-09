@@ -256,20 +256,27 @@ plot_sss<-function(d.df, df.rwl){
 #need folder chrono_graphs in directory
 #d.df = detrend df; df.rwl = imported rwl file 
 
+sss(BC_Fr) >= .85
 plot_sss(BC_Fr, BC) #BC should truncate at 1880s
 
+sss(BM_Fr) >= .85
 plot_sss(BM_Fr, BM) #BM should truncate at 1880s
 
+sss(OP_Fr) >= .85
 plot_sss(OP_Fr, OP) #OP should truncate at 1960s
 
+sss(PM_Fr) >= .85
 plot_sss(PM_Fr, PM) #PM should truncate at 1880s
 
 plot_sss(PM_TSCA_Fr, PM_TSCA) #PM TSCA should truncate at 1880s
 
+sss(WMA_Fr) >= .85
 plot_sss(WMA_Fr, WMA) #should truncate at 1790s
 
+sss(IB_Fr) >= .85
 plot_sss(IB_Fr, IB) #should truncate at 1850s
 
+sss(BH_Fr) >= .85
 plot_sss(BH_Fr, BH) #should truncate at 1970s
 
 # Chronologies------------------------------------------------------------
