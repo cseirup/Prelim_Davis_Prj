@@ -141,25 +141,25 @@ Comptreeplot <- function(df, SiteCode, sp_group){ # df = data frame, Site = 2 le
     theme_FHM() 
 }
 
-#For making the sapling plot
-Compsapplot <- function(df, SiteCode, sp_group){ # df = data frame, Site = 2 letter site code, sp_group = value containing selected species for the site
-  df2 <- df %>% filter(Site == SiteCode & Species %in% sp_group) #%>% 
-   # mutate(Species = fct_reorder(Species, desc(BA_m2ha)))
-  ggplot(aes(x = Species, y = BA_m2ha, fill = SampleEventNum), data = df2)+
-    geom_col(position = position_dodge2(preserve = "single"))+
-    #xlab('Species')+
-   # ylab(bquote('Basal area ('~m^2*'/ha)'))+ 
-    theme(axis.text = element_text(size = 9), # change axis label size
-          strip.text = element_text(size = 10), # change facet text size
-          axis.title.x = element_blank(), # change axis title size
-          axis.text.x = element_text(size = 10, face = "italic"),
-          axis.title.y = element_blank(),
-          legend.position = "none")+
-    scale_x_discrete(labels = sp_names, guide = guide_axis(n.dodge=3))+
-    scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020s'), 
-                      values = c("1" = '#a1d99b', "2" = '#31a354'))+
-    theme_FHM() 
-}
+# #For making the sapling plot
+# Compsapplot <- function(df, SiteCode, sp_group){ # df = data frame, Site = 2 letter site code, sp_group = value containing selected species for the site
+#   df2 <- df %>% filter(Site == SiteCode & Species %in% sp_group) #%>% 
+#    # mutate(Species = fct_reorder(Species, desc(BA_m2ha)))
+#   ggplot(aes(x = Species, y = BA_m2ha, fill = SampleEventNum), data = df2)+
+#     geom_col(position = position_dodge2(preserve = "single"))+
+#     #xlab('Species')+
+#    # ylab(bquote('Basal area ('~m^2*'/ha)'))+ 
+#     theme(axis.text = element_text(size = 9), # change axis label size
+#           strip.text = element_text(size = 10), # change facet text size
+#           axis.title.x = element_blank(), # change axis title size
+#           axis.text.x = element_text(size = 10, face = "italic"),
+#           axis.title.y = element_blank(),
+#           legend.position = "none")+
+#     scale_x_discrete(labels = sp_names, guide = guide_axis(n.dodge=3))+
+#     scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020s'), 
+#                       values = c("1" = '#a1d99b', "2" = '#31a354'))+
+#     theme_FHM() 
+# }
 
 #For making the seedling plot
 Compseedplot <- function(df, SiteCode, sp_group){ # df = data frame, SiteCode = 2 letter site code, sp_group = value containing selected species for the site

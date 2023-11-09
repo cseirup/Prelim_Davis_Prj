@@ -26,8 +26,8 @@ data <- files_list %>% map(read.csv) %>% set_names(nm = nicknames) #load datafil
 # Common plot labels ------------------------------------------------------
 site_names <- c('BC' = 'Blackwoods', 'BM' = 'Beech Mtn', 'OP' = 'Otter Point', 
                 'PM' = "Pemetic Mtn", 'BH' = 'Bass Harbor Head', 
-                'IB' = 'Ironbound Island', 'WP' = 'Western Mtn',
-                'WP2' = 'Western Mtn 2')
+                'IB' = 'Ironbound Island', 'WP' = '1St W. Mtn Plot',
+                'WP2' = 'Western Mtn')
 
 sp_names <- c('PIRU' = 'Picea rubens', 'PIGL' = 'Picea glauca', 'TSCA' = 'Tsuga canadensis', 
               'ABBA' = "Abies balsamea", 'ACRU' = 'Acer rubrum', 'BEPA' = 'Betula papyrifera',
@@ -37,10 +37,11 @@ sp_names <- c('PIRU' = 'Picea rubens', 'PIGL' = 'Picea glauca', 'TSCA' = 'Tsuga 
 
 # Stem map ----------------------------------------------------------------
 list2env(data["trees"], envir = .GlobalEnv)
+trees <- trees %>% filter(Site != "WP") #Remove first Western Mtn plot that was replaced with WP2
 trees$Site <- ordered(trees$Site,
-                      levels = c("BM", "PM", "BC",  "OP", "BH","IB", "WP", "WP2"))
+                      levels = c("BH", "OP", "BM", "PM", "BC",   "IB", "WP2"))
 
-stem_mapV <- trees %>% filter(Site != 'WP') %>% 
+stem_mapV <- trees %>% 
   ggplot(aes(x = cY, y = cX))+
   geom_hline(yintercept = 5, linetype = 2)+
   geom_vline(xintercept = 100, linetype = 2)+ 
@@ -69,39 +70,11 @@ stem_mapV <- trees %>% filter(Site != 'WP') %>%
   theme_FHM()
 stem_mapV
 
-stem_mapWP <- trees %>% filter(Site == 'WP') %>% 
-  ggplot(aes(x = cY, y = cX))+
-  geom_point(aes(color = Status, size = DBH))+
-  #coord_equal()+# makes x and y the same scale
-  scale_color_manual(name = "Status", labels = c("Dead", "Live"), 
-                     values = c("D" = '#808080', "L" = '#31a354'))+
-  scale_size_continuous(range = c(1, 5))+
-  facet_wrap(~Site, ncol = 1, labeller = as_labeller(site_names))+
-  labs(x = "Easting (meters)", y = "Northing (meters)")+ 
-  theme(axis.text = element_text(size = 10), 
-        strip.text = element_text(size = 10), #facet wrap text size
-        axis.title = element_text(size = 12),
-        legend.text = element_text(size = 12),
-        axis.text.x = element_text(angle = 45, hjust = 1),
-        axis.line = element_line(color = "#696969", size = 0.01),
-        axis.ticks = element_line(color = "#696969", size = 0.5),
-        panel.border = element_blank(),
-        panel.background = element_blank(),
-        strip.background = element_blank(),
-        axis.title.y = element_text(margin = margin(r = 5)),
-        aspect.ratio = 3/10,
-        legend.position="bottom")+
-  geom_hline(yintercept = 5, linetype = 2)+
-  geom_hline(yintercept = 10, linetype = 2)+
-  geom_hline(yintercept = 15, linetype = 2)+
-  #geom_text(aes(label=Tag), size = 3)+ #add tag number labels
-  #coord_flip()+
-  theme_FHM()
-stem_mapWP
 # Sapling Heat Maps -------------------------------------------------------
 list2env(data["saps"], envir = .GlobalEnv)
+saps <- saps %>% filter(Site != "WP") #Remove first Western Mtn plot that was replaced with WP2
 saps$Site <- ordered(saps$Site,
-                     levels = c("BM", "PM", "BC",  "OP", "BH","IB", "WP", "WP2"))
+                     levels = c("BH", "OP", "BM", "PM", "BC",   "IB", "WP2"))
 
 sapsb <- saps %>% mutate(X = case_when(Transect == 1|Transect == 3 ~ 2.5, 
                                        Transect == 2|Transect == 4 ~ 7.5)) %>%  
@@ -110,11 +83,11 @@ sapsb <- saps %>% mutate(X = case_when(Transect == 1|Transect == 3 ~ 2.5,
   drop_na() %>% 
   mutate(num_stems = 1) #drop_na deletes quadrats with no saplings recorded
 
-#summarize by site and remove WP (oddly shaped plot, would have to be handled seperately)
-sapsc <- sapsb %>% group_by(Site, Transect, Quadrat) %>% summarise(sum_stems = sum(num_stems),
-                                                                   X = first(X),
-                                                                   Y = first(Y)) %>% 
-  filter(Site != 'WP')
+#summarize by site and remove WP (oddly shaped plot, would have to be handled separately)
+sapsc <- sapsb %>% filter(DBH >= 2.5) %>% group_by(Site, Transect, Quadrat)  %>% 
+                                       summarise(sum_stems = sum(num_stems),
+                                                X = first(X),
+                                                Y = first(Y))
 
 sap_map <- ggplot(sapsc, aes(X,Y)) +
   geom_raster(aes(fill = sum_stems), hjust = 1, vjust = 0.5)+
@@ -138,22 +111,22 @@ sap_map <- ggplot(sapsc, aes(X,Y)) +
 sap_map
 
 # Combined tree stem map + sap heat map -----------------------------------
-sapsd <- sapsc %>% rename(cX = X, cY = Y) %>% select(-Quadrat) #renameing columns to match trees
-treesB <- trees %>% select(Site, Transect, Status, DBH, cX, cY) %>%  filter(Site!='WP')
+sapsd <- sapsc %>% rename(cX = X, cY = Y) %>% dplyr::select(-Quadrat) #renameing columns to match trees
+treesB <- trees %>% dplyr::select(Site, Transect, Status, DBH, cX, cY) 
 
 treesap_map <- ggplot(treesB, aes(x = cY, y = cX))+
   geom_raster(data = sapsd, aes(fill = sum_stems), hjust = 1, vjust = 0.5)+
   geom_hline(yintercept = 5, linetype = 2)+
   geom_vline(xintercept = 100, linetype = 2)+ 
-  scale_fill_gradient(name = "Sapling stems", low = "white", high = "#3182bd")+
+  scale_fill_gradient(name = "Saplings (no. stems)", low = "white", high = "#3182bd")+
   geom_point(aes(color = Status, size = DBH))+
   scale_color_manual(name = "Tree Status", labels = c("Dead", "Live"), 
                      values = c("D" = '#808080', "L" = '#31a354'))+
-  scale_size_continuous(name = 'Tree DBH', range = c(.5, 3.5))+
+  scale_size_continuous(name = 'Tree DBH (cm)', range = c(.5, 3.5))+
   facet_wrap(~Site, ncol = 7, labeller = as_labeller(site_names))+
-  labs(x = "Easting (meters)", y = "Northing (meters)")+ 
+  labs(x = "Northing (meters)", y = "Easting (meters)")+ 
   theme(axis.text = element_text(size = 10), 
-        strip.text = element_text(size = 10), #facet wrap text size
+        strip.text = element_text(size = 9), #facet wrap text size
         axis.title = element_text(size = 12),
         legend.text = element_text(size = 12),
         axis.text.x = element_text(angle = 45, hjust = 1),
@@ -172,12 +145,11 @@ treesap_map
 
 # Combine 2020/21 trees and saps to match Davis size classes---------------------------
 #using Davis size classes, only live trees
-list2env(data["saps"], envir = .GlobalEnv)
 saps2 <- saps %>% drop_na() %>% filter(DBH>=2.5)#only taking >2.5cm to match Davis size classes
 treesL_df1 <- filter(trees, Status == "L") %>% droplevels()  #only live trees
 
-treesL_df1.5 <- treesL_df1 %>% select(Site, Transect, Species, DBH, SampleYear, SampleEventNum)
-saps3 <- saps2 %>% select(Site, Transect, Species, DBH, SampleYear, SampleEventNum) 
+treesL_df1.5 <- treesL_df1 %>% dplyr::select(Site, Transect, Species, DBH, SampleYear, SampleEventNum)
+saps3 <- saps2 %>% dplyr::select(Site, Transect, Species, DBH, SampleYear, SampleEventNum) 
 Ltreesap <- rbind(treesL_df1.5, saps3)
 Ltreesap$BA_cm2 <- round(pi * ((Ltreesap$DBH/2)^2), 4)
 
@@ -216,7 +188,7 @@ midpoints <- data.frame("size_class" = c("d2.5_9.9", "d10_19.9",
 
 trees59qmd <- left_join(trees59qmd, midpoints, by = "size_class")
 
-trees59qmd2 <- trees59qmd %>% select("Site", "Species", "size_class", "num_stem",  
+trees59qmd2 <- trees59qmd %>% dplyr::select("Site", "Species", "size_class", "num_stem",  
                                      "QMD", "midpoint", "SampleYear", "SampleEventNum")
 
 trees59qmd2$QMD <- coalesce(trees59qmd2$QMD, trees59qmd2$midpoint) #replacing missing QMDs with midpoints for that size class/species
@@ -225,29 +197,21 @@ trees59qmd2$BA_cm2 <- round(pi * (((trees59qmd2$QMD/2)^2)*trees59qmd2$num_stem),
 # Combine 1959 and 2020/21 >2.4 tree data ---------------------------------
 intersect(names(trees59qmd2), names(Ltreesap2))
 
-Ltreesap2.5 <- Ltreesap2 %>% select(Site, Species, SampleYear, SampleEventNum, 
+Ltreesap2.5 <- Ltreesap2 %>% dplyr::select(Site, Species, SampleYear, SampleEventNum, 
                                     size_class, num_stem, BA_cm2, DBH) %>% 
   rename(DBH_QMD = DBH)
 
-trees59qmd2.5 <- trees59qmd2 %>% select(Site, Species, SampleYear, SampleEventNum, 
+trees59qmd2.5 <- trees59qmd2 %>% dplyr::select(Site, Species, SampleYear, SampleEventNum, 
                                         size_class, num_stem, BA_cm2, QMD) %>% 
   rename(DBH_QMD = QMD)
 
 Comb_tree <- rbind(Ltreesap2.5, trees59qmd2.5)
 
-#Duplicate 1959 WP data so it will plot against 2022 WP2 data
-Comb_tree2 <- Comb_tree %>% filter(SampleYear == 1959 & Site == "WP")
-Comb_tree2$Site <- recode(Comb_tree2$Site, WP = "WP2")
-#add back to the full tree data
-Comb_tree3 <- rbind(Comb_tree, Comb_tree2)
-
 # Combine with event data
 list2env(data["events"], envir = .GlobalEnv)
 event_tree <- events %>% filter(Module == "Trees")
 
-intersect(names(Comb_tree3), names(event_tree))
-
-Comb_tree_event <- left_join(Comb_tree3, event_tree, by = c("Site","SampleYear","SampleEventNum"))
+Comb_tree_event <- left_join(Comb_tree, event_tree, by = c("Site","SampleYear","SampleEventNum"))
 
 sort(unique(Comb_tree_event$size_class))
 Comb_tree_event$size_class <- ordered(Comb_tree_event$size_class,
@@ -258,12 +222,12 @@ Comb_tree_event$size_class <- ordered(Comb_tree_event$size_class,
 levels(Comb_tree_event$size_class) #Size classes are in the order we want them now
 
 Comb_tree_event$Site <- ordered(Comb_tree_event$Site,
-                                levels = c("BM", "PM", "BC",  "OP", "BH","IB", "WP", "WP2"))
+                                levels = c("BH", "OP", "BM", "PM", "BC", "IB", "WP2"))
 levels(Comb_tree_event$Site)#Sites are in the ordered by complexity now
 
 Comb_tree_event$SampleEventNum <- as.character(Comb_tree_event$SampleEventNum)
 # Calculate basal area and density by site and size class for diameter distributions---------------------------
-tree_dist_ha <- Comb_tree_event %>% select(-c(NumSubplots, SubplotArea, Module, Species, DBH_QMD)) %>% 
+tree_dist_ha <- Comb_tree_event %>% dplyr::select(-c(NumSubplots, SubplotArea, Module, Species, DBH_QMD)) %>% 
   group_by(Site, size_class, SampleEventNum) %>% 
   summarise(sum_stems = sum(num_stem),
             sum_BA_cm2 = sum(BA_cm2),
@@ -273,9 +237,8 @@ tree_dist_ha <- Comb_tree_event %>% select(-c(NumSubplots, SubplotArea, Module, 
   mutate(num_stems_ha = round(sum_stems * (10000/TotArea), digits = 0), 
          BA_m2ha = sum_BA_cm2/TotArea) %>% 
   mutate(log10stems_ha = log10(num_stems_ha)) %>% 
-  select(Site, SiteName, SampleEventNum, SampleYear, 
-         size_class, num_stems_ha, BA_m2ha,log10stems_ha) %>% 
-  filter(Site != "WP")
+  dplyr::select(Site, SiteName, SampleEventNum, SampleYear, 
+         size_class, num_stems_ha, BA_m2ha,log10stems_ha) 
   
 
 # Plot diameter distribution comparison -----------------------------------
@@ -303,6 +266,32 @@ Comp_tree_dist_plot <- ggplot(data = tree_dist_ha, aes(color = SampleEventNum, x
 
 Comp_tree_dist_plot  
 
+#no saps
+dist_plot_no_saps <- tree_dist_ha %>% filter(size_class != "d2.5_9.9") %>% 
+  ggplot(aes(color = SampleEventNum, x = size_class, y = num_stems_ha))+
+  geom_point()+ 
+  geom_line(aes(group = SampleEventNum), linewidth = 2)+
+  facet_wrap(~Site, ncol = 4, labeller = as_labeller(site_names))+
+  labs(x = "Tree Diameter Class (cm)", y = "stems/ha")+ 
+  theme(axis.text = element_text(size = 9), # change axis label size
+        strip.text = element_text(size = 10), # change facet text size
+        axis.title = element_text(size = 12), # change axis title size
+        axis.text.x = element_text(angle = 60, hjust = 1),
+        axis.title.y = element_text(margin = margin(r = 5)),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12),
+        legend.position = c(1,0),
+        legend.justification = c(1,0))+
+  scale_color_manual(name = "Year", labels = c("1" = '1959', "2" = '2020-2022'), 
+                     values = c("1" = '#a1d99b', "2" = '#31a354'))+
+  scale_x_discrete(labels= c('10-20',
+                             '20-30','30-40','40-50',
+                             '50-60','60-70','70+'))+ 
+  theme_FHM() 
+
+dist_plot_no_saps 
+
+
 #log10 diameter distribution
 Log10_tree_dist_plot <- ggplot(data = tree_dist_ha, aes(color = SampleEventNum, x = size_class, y = log10stems_ha))+
   geom_point()+ 
@@ -327,8 +316,18 @@ Log10_tree_dist_plot <- ggplot(data = tree_dist_ha, aes(color = SampleEventNum, 
 
 Log10_tree_dist_plot  
 
-#staggered bar plots
-Comp_tree_dist_bar <- ggplot(data = tree_dist_ha, aes(x = size_class, y = num_stems_ha, fill = SampleEventNum))+
+
+
+#staggered bar plots w/ no saps
+#Fill in zeros for missing species detentions (for better plotting)
+tree_dist_ha2 <- tree_dist_ha %>% dplyr::select(-c(BA_m2ha, log10stems_ha)) %>% 
+                                  pivot_wider(names_from = size_class, values_from = num_stems_ha, values_fill = 0)
+
+tree_dist_ha3 <- tree_dist_ha2 %>% pivot_longer(cols = 6:10, names_to = "size_class", values_to = "num_stems_ha")
+
+
+Comp_tree_dist_bar <- tree_dist_ha3 %>% filter(size_class != "d2.5_9.9") %>%  
+  ggplot(aes(x = size_class, y = num_stems_ha, fill = SampleEventNum))+
   geom_bar(width = .75, position = position_dodge(), stat = 'identity')+
   facet_wrap(~Site, ncol = 4, labeller = as_labeller(site_names))+
   labs(x = "Tree Diameter Class (cm)", y = "stems/ha")+ 
@@ -342,12 +341,28 @@ Comp_tree_dist_bar <- ggplot(data = tree_dist_ha, aes(x = size_class, y = num_st
         legend.position = c(0.97,0.3),
         legend.justification = c(1,0))+
   scale_fill_manual(name = "Year", labels = c("1" = '1959', "2" = '2020/21'), values = c("1" = '#a1d99b', "2" = '#31a354'))+
-  scale_x_discrete(labels= c('2.5 \U2013 10','10 \U2013 20',
+  scale_x_discrete(labels= c('10 \U2013 20',
                              '20 \U2013 30','30 \U2013 40','40 \U2013 50',
                              '50 \U2013 60','60 \U2013 70','70+'))+ 
   theme_FHM() 
 
 Comp_tree_dist_bar
+
+
+# ibuttons ----------------------------------------------------------------
+#library(MASS)
+list2env(data["ibutDAYall"], envir = .GlobalEnv)
+list2env(data["ibutMONall"], envir = .GlobalEnv)
+
+str(ibutDAYall)
+
+p.ibut <- ggplot(data = ibutDAYall,  aes(x = day, y = airTmin))+
+                   facet_wrap(~site_NSEW, ncol = 4)+
+                   theme_FHM()
+                 
+p.ibut
+
+#ibut <- stl(ibutDAYall, s.window='periodic')
 
 # Table 2: Calculate density, ba, biomass, carbon mass ---------------------------
 #use Comb_tree_event df of trees and saps >2.4 cm created earlier
@@ -361,7 +376,7 @@ SumTable$carbon <- mapply(compcarb,Species=SumTable$Species, biomass = SumTable$
 
 names(SumTable)
 #summing metrics by site and calculating total carbon and biomass for 1959 plots by * by number of stems per site
-SumTable_site <- SumTable %>% select(-c(NumSubplots, SubplotArea, Module, Species, size_class, DBH_QMD)) %>% 
+SumTable_site <- SumTable %>% dplyr::select(-c(NumSubplots, SubplotArea, Module, Species, size_class, DBH_QMD)) %>% 
   group_by(Site, SampleEventNum) %>% 
   summarise(SampleYear = first(SampleYear),
             SiteName = first(SiteName),
@@ -377,7 +392,7 @@ SumTable_ha <- SumTable_site %>%  mutate(density_ha = sum_stems * (10000/TotArea
                                          carbonmass_Mgha = (sum_carb * (10000/TotArea))/1000, 
                                          biomass_Mgha = (sum_comp * (10000/TotArea))/1000) %>% 
   mutate(across(where(is.numeric), round, 0)) %>% 
-  select(Site, SiteName, SampleEventNum, 
+  dplyr::select(Site, SiteName, SampleEventNum, 
          density_ha, BA_m2ha, biomass_Mgha, carbonmass_Mgha) 
 
 SumTable_ha$SampleEventNum <- as.character(SumTable_ha$SampleEventNum)
@@ -388,7 +403,7 @@ SumTable_ha2 <- SumTable_ha %>% pivot_wider(names_from = SampleEventNum,
 
 #Adding sapling stems/ha for both visits to Table 2
 sapTable <- Comb_tree_event %>% filter(size_class == 'd2.5_9.9') %>% 
-  select(-c(NumSubplots, SubplotArea, Module, Species, size_class, DBH_QMD)) %>% 
+  dplyr::select(-c(NumSubplots, SubplotArea, Module, Species, size_class, DBH_QMD)) %>% 
   group_by(Site, SampleEventNum) %>% 
   summarise(SampleYear = first(SampleYear),
             SiteName = first(SiteName),
@@ -398,7 +413,7 @@ sapTable <- Comb_tree_event %>% filter(size_class == 'd2.5_9.9') %>%
 #converting from plot to ha and kg to megagram 
 sapTable_ha <- sapTable %>%  mutate(density_ha = sum_stems * (10000/TotArea)) %>%  
                               mutate(across(where(is.numeric), round, 0)) %>% 
-                              select(Site, SiteName, SampleEventNum, 
+                              dplyr::select(Site, SiteName, SampleEventNum, 
                                                 density_ha) 
 
 sapTable_ha$SampleEventNum <- as.character(sapTable_ha$SampleEventNum)
@@ -412,13 +427,47 @@ sapTable_ha2 <- sapTable_ha %>% pivot_wider(names_from = SampleEventNum,
 
 SumTable_ha3 <- left_join(SumTable_ha2, sapTable_ha2, by = c("Site", "SiteName"))
 
+#Adding 1959 mosses and lichen
+list2env(data["BrLi59"], envir = .GlobalEnv)
+
+BrLi59sum <- BrLi59 %>% group_by(Site) %>% summarise(BriLicCov = sum(Cover))
+
+SumTable_ha4 <- left_join(SumTable_ha3, BrLi59sum, by = "Site")
+
+#adding bryophyte/lichen
+list2env(data["qd_ch"], envir = .GlobalEnv)
+qd_ch <- qd_ch %>% filter(Site != "WP")
+CoverClasses <- data.frame("Cover" = 0:9, 
+                           cClasses = c("0", "<1", "1-2", "2-5", "5-10", "10-25", "25-50",
+                                        "50-75", "75-95", "95-100"),
+                           cMidpoints = c("0", "0.5", "1.5", "3.5", "7.5", "17.5", "37.5",
+                                          "62.5", "87.5", "97.5"))
+
+qd_ch2 <- left_join(qd_ch, CoverClasses, by = "Cover")
+qd_ch2$cMidpoints <- as.numeric(qd_ch2$cMidpoints)
+str(qd_ch2)
+#add lichen, ns spagnum bryophite, and sphaghum together per quad
+BryLic <- qd_ch2 %>% filter(Character == "Lichen" | Character == "Sphagnum"| Character == "NS Bryophyte") %>% 
+  group_by(Site, SampleEventNum, Quadrat_Num) %>% 
+  summarise(BryLicCov = sum(cMidpoints),
+            n = n())
+
+#Summarize by Site
+BryLic2 <- BryLic %>% group_by(Site, SampleEventNum) %>% 
+  summarise(avgBryLicCov = sum(BryLicCov)/n(),
+            num_quads = n(),
+            se_cov = sd(BryLicCov)/sqrt(n()),
+            sd_cover = sd(BryLicCov))
+
+SumTable_ha5 <- left_join(SumTable_ha4, dplyr::select(BryLic2, avgBryLicCov), by = "Site")
+
 #Adding standing dead tree BA to table
 names(events)
 names(trees)
 dtrees <- trees %>% filter(Status == "D") %>% left_join(event_tree, by = c("Site", "SampleEventNum", "SampleYear"))
 dtrees$BA_cm2 <- round(pi * ((dtrees$DBH/2)^2), 4)
 names(dtrees)
-dtreeTable <- dtrees %>%  select(Site,SiteName,BA_cm2,SampleEventNum,SampleYear,TotArea) %>% 
+dtreeTable <- dtrees %>%  dplyr::select(Site,SiteName,BA_cm2,SampleEventNum,SampleYear,TotArea) %>% 
   group_by(Site, SampleEventNum) %>% 
   summarise(SampleYear = first(SampleYear),
             SiteName = first(SiteName),
@@ -427,59 +476,28 @@ dtreeTable <- dtrees %>%  select(Site,SiteName,BA_cm2,SampleEventNum,SampleYear,
 
 #converting from plot to ha 
 dtreeTable_ha <- dtreeTable %>%  mutate(BA_m2ha = sum_BA_cm2/TotArea) %>%  
-  mutate(across(where(is.numeric), round, 0)) %>% 
-  select(Site, SiteName,  BA_m2ha) 
+  mutate(across(where(is.numeric), round, 1)) %>% 
+  dplyr::select(Site, SiteName,  BA_m2ha) 
 
 dtreeTable_ha2 <- dtreeTable_ha %>% rename("2020s SDW BA_m2ha"= BA_m2ha)
 
 
-SumTable_ha4 <- left_join(SumTable_ha3, dtreeTable_ha2, by = c("Site", "SiteName"))
+SumTable_ha6 <- left_join(SumTable_ha5, dtreeTable_ha2, by = c("Site", "SiteName"))
 
 #Adding CWD
 list2env(data["cwd"], envir = .GlobalEnv)
+cwd <- cwd %>% filter(Site != "WP")
 
-SumTable_ha5 <- left_join(SumTable_ha4, cwd, by = "Site")
+SumTable_ha7 <- left_join(SumTable_ha6, cwd, by = "Site")
 
-SumTable_ha6 <- SumTable_ha5 %>% ungroup() %>% 
-  mutate(vol_m3ha = round(vol_m3ha)) %>% 
-  select(-c("carbonmass_Mgha_2", "carbonmass_Mgha_1", "num_pieces"))
+SumTable_ha8 <- SumTable_ha7 %>% ungroup() %>% 
+  mutate(vol_m3ha = round(vol_m3ha, digits = 1)) %>% 
+  mutate(avgBryLicCov = round(avgBryLicCov, digits = 1)) %>% 
+  dplyr::select(-c("carbonmass_Mgha_2", "carbonmass_Mgha_1", "num_pieces", "SiteName"))
 
-#adding bryophyte/lichen
-list2env(data["qd_ch"], envir = .GlobalEnv)
-CoverClasses <- data.frame("Cover" = 0:9, 
-                        cClasses = c("0", "<1", "1-2", "2-5", "5-10", "10-25", "25-50",
-                                     "50-75", "75-95", "95-100"),
-                        cMidpoints = c("0", "0.5", "1.5", "3.5", "7.5", "17.5", "37.5",
-                                       "62.5", "87.5", "97.5"))
 
-qd_ch2 <- left_join(qd_ch, CoverClasses, by = "Cover")
-qd_ch2$cMidpoints <- as.numeric(qd_ch2$cMidpoints)
-str(qd_ch2)
-#add lichen, ns spagnum bryophite, and sphaghum together per quad
-BryLic <- qd_ch2 %>% filter(Character == "Lichen" | Character == "Sphagnum"| Character == "NS Bryophyte") %>% 
-                     group_by(Site, SampleEventNum, Quadrat_Num) %>% 
-                     summarise(BryLicCov = sum(cMidpoints),
-                               n = n())
 
-#Summarize by Site
-BryLic2 <- BryLic %>% group_by(Site, SampleEventNum) %>% 
-                      summarise(avgBryLicCov = sum(BryLicCov)/n(),
-                      num_quads = n(),
-                      se_cov = sd(BryLicCov)/sqrt(n()),
-                      sd_cover = sd(BryLicCov))
-                               
-SumTable_ha7 <- left_join(SumTable_ha6, select(BryLic2, avgBryLicCov), by = "Site")
-
-#1959 mosses and lichen
-list2env(data["BrLi59"], envir = .GlobalEnv)
-
-BrLi59sum <- BrLi59 %>% group_by(Site) %>% summarise(BriLicCov = sum(Cover))
-names(BrLi59sum)
-names(SumTable_ha7)
-
-SumTable_ha8 <- left_join(SumTable_ha7, BrLi59sum, by = "Site")
-
-kable(SumTable_ha6)
+kable(SumTable_ha8)
 #write.csv(Comb_sum_table, './tables/Summary_metrics1959_2020_2.5.csv', row.names = FALSE)
 
 
@@ -488,17 +506,23 @@ kable(SumTable_ha6)
 dSites <- readxl::read_xlsx("C:/01_NETN/Forest_Health/R_Dev/Davis_data/Site_description_table.xlsx")
 kable(dSites)
 
-# Table 3 -----------------------------------------------------------------
+# Table 3: core summary -----------------------------------------------------------------
 
 sCores <- readxl::read_xlsx("C:/01_NETN/Forest_Health/R_Dev/Davis_data/Core_site_summary_table.xlsx")
 kable(sCores)
+
+
+# Table 4: Site Abbreviations ---------------------------------------------
+sCodes <- readxl::read_xlsx("C:/01_NETN/Forest_Health/R_Dev/Davis_data/Site_codes_table.xlsx")
+kable(sCores)
+
 
 
 # Species comparison: Basal area trees and saps, density seeds ----------------------------------------
 #Species composition by site: 
 #trees
 tree_sp_ha <- Comb_tree_event %>% filter(size_class != "d2.5_9.9") %>% 
-                                    select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
+                                    dplyr::select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
                                     group_by(Site, Species, SampleEventNum) %>% 
                                     summarise(sum_stems = sum(num_stem),
                                               sum_BA_cm2 = sum(BA_cm2),
@@ -507,16 +531,16 @@ tree_sp_ha <- Comb_tree_event %>% filter(size_class != "d2.5_9.9") %>%
                                               SiteName = first(SiteName)) %>% 
                                     mutate(num_stems_ha = sum_stems * (10000/TotArea), 
                                            BA_m2ha = sum_BA_cm2/TotArea) %>% 
-                                    select(Site, SiteName, SampleEventNum, SampleYear, 
+                                    dplyr::select(Site, SiteName, SampleEventNum, SampleYear, 
                                            Species, num_stems_ha, BA_m2ha) 
 
 #Fill in zeros for missing species detentions (for better plotting)
-tree_sp_ha2 <- tree_sp_ha %>% select(-num_stems_ha) %>% pivot_wider(names_from = Species, values_from = BA_m2ha, values_fill = 0)
+tree_sp_ha2 <- tree_sp_ha %>% dplyr::select(-num_stems_ha) %>% pivot_wider(names_from = Species, values_from = BA_m2ha, values_fill = 0)
 tree_sp_haC <- tree_sp_ha2 %>% pivot_longer(cols = ABBA:BECO, names_to = "Species", values_to = "BA_m2ha")
 
 #saps
 sap_sp_ha <- Comb_tree_event %>% filter(size_class == 'd2.5_9.9') %>% 
-                                  select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
+                                  dplyr::select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
                                   group_by(Site, Species, SampleEventNum) %>% 
                                   summarise(sum_stems = sum(num_stem),
                                             sum_BA_cm2 = sum(BA_cm2),
@@ -525,11 +549,11 @@ sap_sp_ha <- Comb_tree_event %>% filter(size_class == 'd2.5_9.9') %>%
                                             SiteName = first(SiteName)) %>% 
                                   mutate(num_stems_ha = sum_stems * (10000/TotArea), 
                                          BA_m2ha = sum_BA_cm2/TotArea) %>% 
-                                  select(Site, SiteName, SampleEventNum, SampleYear, 
+                                  dplyr::select(Site, SiteName, SampleEventNum, SampleYear, 
                                          Species, num_stems_ha, BA_m2ha) 
 #Fill in zeros for missing species detentions (for better plotting)
-sap_sp_ha2 <- sap_sp_ha %>% select(-num_stems_ha) %>% pivot_wider(names_from = Species, values_from = BA_m2ha, values_fill = 0)
-sap_sp_haC <- sap_sp_ha2 %>% pivot_longer(cols = ABBA:ACSP, names_to = "Species", values_to = "BA_m2ha")
+sap_sp_ha2 <- sap_sp_ha %>% dplyr::select(-BA_m2ha) %>% pivot_wider(names_from = Species, values_from = num_stems_ha, values_fill = 0)
+sap_sp_haC <- sap_sp_ha2 %>% pivot_longer(cols = ABBA:ACSP, names_to = "Species", values_to = "num_stems_ha")
 
 #seeds
 list2env(data["seeds"], envir = .GlobalEnv)
@@ -542,7 +566,7 @@ seeds2 <- seeds %>% filter(Latin_name != "No species") %>%
                               SampleEventNum = first(SampleEventNum)) %>% 
                     mutate(den_m2 = Sum_stem/30) # 30 m2 quadrats, convert to per m2
 
-seeds3 <- seeds2 %>% select(Site, Latin_name, den_m2, SampleYear, SampleEventNum) %>%
+seeds3 <- seeds2 %>% dplyr::select(Site, Latin_name, den_m2, SampleYear, SampleEventNum) %>%
                       ungroup() 
 
 seeds4 <- rbind(seeds3, seeds59)
@@ -567,280 +591,310 @@ table(seedsC$Species)
                                         # "Acer rubrum", "Betula papyrifera", "Acer pensylvanicum", "Pinus strobus", "Sorbus decora"))
 ###Beech Mtn####: doing each site separately so species selection is customized
 #trees
-rankBA(tree_sp_haC, "BM")
-BM_tr <- c("PIRU", "BEPA", "TSCA", "ACRU", "THOC") # top 4 for each visit, only kicking out ABBA
-#saps
-rankBA(sap_sp_haC, "BM")
-BM_sp <- c("PIRU", "THOC","ABBA","TSCA","ACPE") #top 4 for each visit, doesn't kick anything out
-#seeds
-rankDEN(seedsC, "BM")
-sp_names
-BM_sd <- c("Picea rubens", "Abies balsamea","Tsuga canadensis") #top 4 for each visit, doesn't kick anything out
-
-#BM tree plot
-pBM_tree <- Comptreeplot(tree_sp_haC, "BM", BM_tr)
-pBM_tree
-
-#BM sap plot
-pBM_sap <- Compsapplot(sap_sp_haC, "BM", BM_sp)
-pBM_sap
-
-#BM seed plot
-pBM_seed <- Compseedplot(seedsC, "BM", BM_sd)
-pBM_seed
-
-####Pemetic Mtn###
-#trees
-rankBA(tree_sp_haC, "PM")
-PM_tr <- c("PIRU","TSCA", "BEPA", "ACRU", "PIST") # top 4 for each visit, only kicking out ABBA
-#saps
-rankBA(sap_sp_haC, "PM")
-PM_sp <- c("PIRU", "ACRU","TSCA","ACPE") #top 4 for each visit, doesn't kick anything out
-#seeds
-rankDEN(seedsC, "PM")
-sp_names
-PM_sd <- c("Picea rubens", "Betula papyrifera","Tsuga canadensis","Acer pensylvanicum") #top 4 for each visit, doesn't kick anything out
-
-#PM tree plot
-pPM_tree <- Comptreeplot(tree_sp_haC, "PM", PM_tr)
-pPM_tree
-
-#PM sap plot
-pPM_sap <- Compsapplot(sap_sp_haC, "PM", PM_sp)
-pPM_sap
-
-#PM seed plot
-pPM_seed <- Compseedplot(seedsC, "PM", PM_sd)
-pPM_seed
-
-####Blackwoods###
-#trees
-rankBA(tree_sp_haC, "BC")
-BC_tr <- c("PIRU","BEPA", "THOC", "ACRU", "PIST") # top 4 for each visit, didn't kick any out
-#saps
-rankBA(sap_sp_haC, "BC")
-BC_sp <- c("PIRU", "ABBA", "AMELANCHIER", "BEPA", "ACPE") #top 4 for each visit, doesn't kick anything out
-#seeds
-rankDEN(seedsC, "BC")
-sp_names
-BC_sd <- c("Picea rubens",  "Abies balsamea","Pinus strobus") #top 4 for each visit, doesn't kick anything out
-
-#BC tree plot
-pBC_tree <- Comptreeplot(tree_sp_haC, "BC", BC_tr)
-pBC_tree
-
-#BC sap plot
-pBC_sap <- Compsapplot(sap_sp_haC, "BC", BC_sp)
-pBC_sap
-
-#BC seed plot
-pBC_seed <- Compseedplot(seedsC, "BC", BC_sd)
-pBC_seed
-
-####Otter Point###
-#trees
-rankBA(tree_sp_haC, "OP")
-OP_tr <- c("PIRU","BEPA", "PIGL", "ABBA") # top 4 for each visit, didn't kick any out
-#saps
-rankBA(sap_sp_haC, "OP")
-OP_sp <- c("PIRU", "ABBA", "AMELANCHIER", "BEPA") #top 4 for each visit, doesn't kick anything out
-#seeds
-rankDEN(seedsC, "OP")
-sp_names
-OP_sd <- c("Picea rubens",  "Abies balsamea","Amelanchier") #top 4 for each visit, doesn't kick anything out
-
-#OP tree plot
-pOP_tree <- Comptreeplot(tree_sp_haC, "OP", OP_tr)
-pOP_tree
-
-#OP sap plot
-pOP_sap <- Compsapplot(sap_sp_haC, "OP", OP_sp)
-pOP_sap
-
-#OP seed plot
-pOP_seed <- Compseedplot(seedsC, "OP", OP_sd)
-pOP_seed
-
-####Bass Harbor###
-#trees
-rankBA(tree_sp_haC, "BH")
-BH_tr <- c("PIRU","BEPA", "PIGL", "ABBA") # top 4 for each visit, Kicked out Amelanchier
-#saps
-rankBA(sap_sp_haC, "BH")
-BH_sp <- c("PIRU", "PIGL", "ABBA", "BECO") #top 4 for each visit, kicked out PRPR, BEPA, SODE
-#seeds
-rankDEN(seedsC, "BH")
-sp_names
-BH_sd <- c("Picea rubens", "Picea glauca", "Abies balsamea", "Sorbus decora") #top 4 for each visit, doesn't kick anything out
-
-#BH tree plot
-pBH_tree <- Comptreeplot(tree_sp_haC, "BH", BH_tr)
-pBH_tree
-
-#BH sap plot
-pBH_sap <- Compsapplot(sap_sp_haC, "BH", BH_sp)
-pBH_sap
-
-#BH seed plot
-pBH_seed <- Compseedplot(seedsC, "BH", BH_sd)
-pBH_seed
-
-####Ironbound###
-#trees
-rankBA(tree_sp_haC, "IB")
-IB_tr <- c("PIRU","BEAL", "ACRU", "ABBA") # top 4 for each visit, none kicked out
-#saps
-rankBA(sap_sp_haC, "IB")
-IB_sp <- c("PIRU","AMELANCHIER", "ACRU", "ABBA", "ACPE") #top 4 for each visit, kicked out ACSP, THOC
-#seeds
-rankDEN(seedsC, "IB")
-sp_names
-IB_sd <- c("Picea rubens", "Acer rubrum", "Abies balsamea", "Pinus strobus") #top 4 for each visit, doesn't kick anything out
-
-#IB tree plot
-pIB_tree <- Comptreeplot(tree_sp_haC, "IB", IB_tr)
-pIB_tree
-
-#IB sap plot
-pIB_sap <- Compsapplot(sap_sp_haC, "IB", IB_sp)
-pIB_sap
-
-#IB seed plot
-pIB_seed <- Compseedplot(seedsC, "IB", IB_sd)
-pIB_seed
-
-####Western Mtn 2###
-#trees
-rankBA(tree_sp_haC, "WP2")
-WP2_tr <- c("PIRU","BEAL", "ACRU", "ABBA", "BECO") # top 4 for each visit, none kicked out
-#saps
-rankBA(sap_sp_haC, "WP2")
-WP2_sp <- c("PIRU","BECO", "ACRU", "ABBA") #top 4 for each visit, kicked out ACSP, THOC
-#seeds
-rankDEN(seedsC, "WP2")
-sp_names
-WP2_sd <- c("Picea rubens", "Abies balsamea") #top 4 for each visit, doesn't kick anything out
-
-#WP2 tree plot
-pWP2_tree <- Comptreeplot(tree_sp_haC, "WP2", WP2_tr)
-pWP2_tree
-
-#WP2 sap plot
-pWP2_sap <- Compsapplot(sap_sp_haC, "WP2", WP2_sp)
-pWP2_sap
-
-#WP2 seed plot
-pWP2_seed <- Compseedplot(seedsC, "WP2", WP2_sd)
-pWP2_seed
-
-#Combining all plots with patchwork
-
-spComp <- (pBH_tree+pBH_sap+pBH_seed)/(pOP_tree+pOP_sap+pOP_seed)/(pPM_tree+pPM_sap+pPM_seed)/
-          (pBC_tree+pBC_sap+pBC_seed)/(pBM_tree+pBM_sap+pBM_seed)/(pIB_tree+pIB_sap+pIB_seed)/
-          (pWP2_tree+pWP2_sap+pWP2_seed)+
-          plot_layout(guides = 'collect')
-
-TR <- pBH_tree/pOP_tree/pPM_tree/pBC_tree/pBM_tree/pIB_tree/pWP2_tree
-TRy <- wrap_elements(panel = TR) +
-       labs(tag = bquote('Basal area ('~m^2*'/ha)')) +
-       theme(plot.tag = element_text(size = rel(1.5), angle = 90),
-        plot.tag.position = "left")+
-  plot_annotation(title = 'Trees', theme = theme(plot.title = element_text(hjust = .5)))
-TRy
-
-SP <- pBH_sap/pOP_sap/pPM_sap/pBC_sap/pBM_sap/pIB_sap/pWP2_sap
-SPy <- wrap_elements(panel = SP) +
-        labs(tag = bquote('Basal area ('~m^2*'/ha)')) +
-         theme(plot.tag = element_text(size = rel(1.5), angle = 90),
-               plot.tag.position = "left")+
-  plot_annotation(title = 'Saplings', theme = theme(plot.title = element_text(hjust = .5)))
-
-SD <- pBH_seed/pOP_seed/pPM_seed/pBC_seed/pBM_seed/pIB_seed/pWP2_seed +
-  plot_layout(guides = 'collect')
-SDy <- wrap_elements(panel = SD) +
-  labs(tag = bquote('Density (stems/'~m^2*')')) +
-  theme(plot.tag = element_text(size = rel(1.5), angle = 90),
-        plot.tag.position = "left")+
-  plot_annotation(title = 'Seedlings', theme = theme(plot.title = element_text(hjust = .5)))
-
-spComp2 <- wrap_elements(TRy)+wrap_elements(SPy)+wrap_elements(SDy)
-
-spComp3 <- wrap_elements(panel = spComp2) +
-  labs(tag = "Species") +
-theme(plot.tag = element_text(size = rel(1.5)),
-      plot.tag.position = "bottom")
-spComp3
+# rankBA(tree_sp_haC, "BM")
+# BM_tr <- c("PIRU", "BEPA", "TSCA", "ACRU", "THOC") # top 4 for each visit, only kicking out ABBA
+# #saps
+# rankBA(sap_sp_haC, "BM")
+# BM_sp <- c("PIRU", "THOC","ABBA","TSCA","ACPE") #top 4 for each visit, doesn't kick anything out
+# #seeds
+# rankDEN(seedsC, "BM")
+# sp_names
+# BM_sd <- c("Picea rubens", "Abies balsamea","Tsuga canadensis") #top 4 for each visit, doesn't kick anything out
+# 
+# #BM tree plot
+# pBM_tree <- Comptreeplot(tree_sp_haC, "BM", BM_tr)
+# pBM_tree
+# 
+# #BM sap plot
+# pBM_sap <- Compsapplot(sap_sp_haC, "BM", BM_sp)
+# pBM_sap
+# 
+# #BM seed plot
+# pBM_seed <- Compseedplot(seedsC, "BM", BM_sd)
+# pBM_seed
+# 
+# ####Pemetic Mtn###
+# #trees
+# rankBA(tree_sp_haC, "PM")
+# PM_tr <- c("PIRU","TSCA", "BEPA", "ACRU", "PIST") # top 4 for each visit, only kicking out ABBA
+# #saps
+# rankBA(sap_sp_haC, "PM")
+# PM_sp <- c("PIRU", "ACRU","TSCA","ACPE") #top 4 for each visit, doesn't kick anything out
+# #seeds
+# rankDEN(seedsC, "PM")
+# sp_names
+# PM_sd <- c("Picea rubens", "Betula papyrifera","Tsuga canadensis","Acer pensylvanicum") #top 4 for each visit, doesn't kick anything out
+# 
+# #PM tree plot
+# pPM_tree <- Comptreeplot(tree_sp_haC, "PM", PM_tr)
+# pPM_tree
+# 
+# #PM sap plot
+# pPM_sap <- Compsapplot(sap_sp_haC, "PM", PM_sp)
+# pPM_sap
+# 
+# #PM seed plot
+# pPM_seed <- Compseedplot(seedsC, "PM", PM_sd)
+# pPM_seed
+# 
+# ####Blackwoods###
+# #trees
+# rankBA(tree_sp_haC, "BC")
+# BC_tr <- c("PIRU","BEPA", "THOC", "ACRU", "PIST") # top 4 for each visit, didn't kick any out
+# #saps
+# rankBA(sap_sp_haC, "BC")
+# BC_sp <- c("PIRU", "ABBA", "AMELANCHIER", "BEPA", "ACPE") #top 4 for each visit, doesn't kick anything out
+# #seeds
+# rankDEN(seedsC, "BC")
+# sp_names
+# BC_sd <- c("Picea rubens",  "Abies balsamea","Pinus strobus") #top 4 for each visit, doesn't kick anything out
+# 
+# #BC tree plot
+# pBC_tree <- Comptreeplot(tree_sp_haC, "BC", BC_tr)
+# pBC_tree
+# 
+# #BC sap plot
+# pBC_sap <- Compsapplot(sap_sp_haC, "BC", BC_sp)
+# pBC_sap
+# 
+# #BC seed plot
+# pBC_seed <- Compseedplot(seedsC, "BC", BC_sd)
+# pBC_seed
+# 
+# ####Otter Point###
+# #trees
+# rankBA(tree_sp_haC, "OP")
+# OP_tr <- c("PIRU","BEPA", "PIGL", "ABBA") # top 4 for each visit, didn't kick any out
+# #saps
+# rankBA(sap_sp_haC, "OP")
+# OP_sp <- c("PIRU", "ABBA", "AMELANCHIER", "BEPA") #top 4 for each visit, doesn't kick anything out
+# #seeds
+# rankDEN(seedsC, "OP")
+# sp_names
+# OP_sd <- c("Picea rubens",  "Abies balsamea","Amelanchier") #top 4 for each visit, doesn't kick anything out
+# 
+# #OP tree plot
+# pOP_tree <- Comptreeplot(tree_sp_haC, "OP", OP_tr)
+# pOP_tree
+# 
+# #OP sap plot
+# pOP_sap <- Compsapplot(sap_sp_haC, "OP", OP_sp)
+# pOP_sap
+# 
+# #OP seed plot
+# pOP_seed <- Compseedplot(seedsC, "OP", OP_sd)
+# pOP_seed
+# 
+# ####Bass Harbor###
+# #trees
+# rankBA(tree_sp_haC, "BH")
+# BH_tr <- c("PIRU","BEPA", "PIGL", "ABBA") # top 4 for each visit, Kicked out Amelanchier
+# #saps
+# rankBA(sap_sp_haC, "BH")
+# BH_sp <- c("PIRU", "PIGL", "ABBA", "BECO") #top 4 for each visit, kicked out PRPR, BEPA, SODE
+# #seeds
+# rankDEN(seedsC, "BH")
+# sp_names
+# BH_sd <- c("Picea rubens", "Picea glauca", "Abies balsamea", "Sorbus decora") #top 4 for each visit, doesn't kick anything out
+# 
+# #BH tree plot
+# pBH_tree <- Comptreeplot(tree_sp_haC, "BH", BH_tr)
+# pBH_tree
+# 
+# #BH sap plot
+# pBH_sap <- Compsapplot(sap_sp_haC, "BH", BH_sp)
+# pBH_sap
+# 
+# #BH seed plot
+# pBH_seed <- Compseedplot(seedsC, "BH", BH_sd)
+# pBH_seed
+# 
+# ####Ironbound###
+# #trees
+# rankBA(tree_sp_haC, "IB")
+# IB_tr <- c("PIRU","BEAL", "ACRU", "ABBA") # top 4 for each visit, none kicked out
+# #saps
+# rankBA(sap_sp_haC, "IB")
+# IB_sp <- c("PIRU","AMELANCHIER", "ACRU", "ABBA", "ACPE") #top 4 for each visit, kicked out ACSP, THOC
+# #seeds
+# rankDEN(seedsC, "IB")
+# sp_names
+# IB_sd <- c("Picea rubens", "Acer rubrum", "Abies balsamea", "Pinus strobus") #top 4 for each visit, doesn't kick anything out
+# 
+# #IB tree plot
+# pIB_tree <- Comptreeplot(tree_sp_haC, "IB", IB_tr)
+# pIB_tree
+# 
+# #IB sap plot
+# pIB_sap <- Compsapplot(sap_sp_haC, "IB", IB_sp)
+# pIB_sap
+# 
+# #IB seed plot
+# pIB_seed <- Compseedplot(seedsC, "IB", IB_sd)
+# pIB_seed
+# 
+# ####Western Mtn 2###
+# #trees
+# rankBA(tree_sp_haC, "WP2")
+# WP2_tr <- c("PIRU","BEAL", "ACRU", "ABBA", "BECO") # top 4 for each visit, none kicked out
+# #saps
+# rankBA(sap_sp_haC, "WP2")
+# WP2_sp <- c("PIRU","BECO", "ACRU", "ABBA") #top 4 for each visit, kicked out ACSP, THOC
+# #seeds
+# rankDEN(seedsC, "WP2")
+# sp_names
+# WP2_sd <- c("Picea rubens", "Abies balsamea") #top 4 for each visit, doesn't kick anything out
+# 
+# #WP2 tree plot
+# pWP2_tree <- Comptreeplot(tree_sp_haC, "WP2", WP2_tr)
+# pWP2_tree
+# 
+# #WP2 sap plot
+# pWP2_sap <- Compsapplot(sap_sp_haC, "WP2", WP2_sp)
+# pWP2_sap
+# 
+# #WP2 seed plot
+# pWP2_seed <- Compseedplot(seedsC, "WP2", WP2_sd)
+# pWP2_seed
+# 
+# #Combining all plots with patchwork
+# 
+# spComp <- (pBH_tree+pBH_sap+pBH_seed)/(pOP_tree+pOP_sap+pOP_seed)/(pPM_tree+pPM_sap+pPM_seed)/
+#           (pBC_tree+pBC_sap+pBC_seed)/(pBM_tree+pBM_sap+pBM_seed)/(pIB_tree+pIB_sap+pIB_seed)/
+#           (pWP2_tree+pWP2_sap+pWP2_seed)+
+#           plot_layout(guides = 'collect')
+# 
+# TR <- pBH_tree/pOP_tree/pPM_tree/pBC_tree/pBM_tree/pIB_tree/pWP2_tree
+# TRy <- wrap_elements(panel = TR) +
+#        labs(tag = bquote('Basal area ('~m^2*'/ha)')) +
+#        theme(plot.tag = element_text(size = rel(1.5), angle = 90),
+#         plot.tag.position = "left")+
+#   plot_annotation(title = 'Trees', theme = theme(plot.title = element_text(hjust = .5)))
+# TRy
+# 
+# SP <- pBH_sap/pOP_sap/pPM_sap/pBC_sap/pBM_sap/pIB_sap/pWP2_sap
+# SPy <- wrap_elements(panel = SP) +
+#         labs(tag = bquote('Basal area ('~m^2*'/ha)')) +
+#          theme(plot.tag = element_text(size = rel(1.5), angle = 90),
+#                plot.tag.position = "left")+
+#   plot_annotation(title = 'Saplings', theme = theme(plot.title = element_text(hjust = .5)))
+# 
+# SD <- pBH_seed/pOP_seed/pPM_seed/pBC_seed/pBM_seed/pIB_seed/pWP2_seed +
+#   plot_layout(guides = 'collect')
+# SDy <- wrap_elements(panel = SD) +
+#   labs(tag = bquote('Density (stems/'~m^2*')')) +
+#   theme(plot.tag = element_text(size = rel(1.5), angle = 90),
+#         plot.tag.position = "left")+
+#   plot_annotation(title = 'Seedlings', theme = theme(plot.title = element_text(hjust = .5)))
+# 
+# spComp2 <- wrap_elements(TRy)+wrap_elements(SPy)+wrap_elements(SDy)
+# 
+# spComp3 <- wrap_elements(panel = spComp2) +
+#   labs(tag = "Species") +
+# theme(plot.tag = element_text(size = rel(1.5)),
+#       plot.tag.position = "bottom")
+# spComp3
 
 #Attempting staggered grouped bar plots
 #Trees
 BET_spp <- c("BEAL", "BECO", "BEPA")
 LOWCAN <- c("ACPE", "ACSP", "AMELANCHIER", "PRPE", "SODE")
 OTHCON <-c("PIST","THOC")
+HRDWDS <- c("ACRU", "ACPE", "ACSP", "AMELANCHIER", "PRPE", "SODE","BEAL", "BECO", "BEPA")
 
 tree_sp_haB <- tree_sp_ha %>% filter(Site != "WP") %>% 
-                  mutate(sppgrp = case_when(Species %in% BET_spp ~ paste0("Betula spp"),
-                                            Species %in% LOWCAN ~ paste0("Low canopy spp"),
+                  mutate(sppgrp = case_when(Species %in% HRDWDS ~ paste0("Deciduous spp"),
                                             Species %in% OTHCON ~ paste0("Other conifer spp"),
-                                        TRUE ~ paste0(Species)))
+                                            TRUE ~ paste0(Species)))
 
 tree_sp_haB$sppgrp <- ordered(tree_sp_haB$sppgrp,
-                             levels = c("PIRU", "PIGL", "ABBA", "TSCA", "ACRU", "Betula spp",
-                                        "Other conifer spp", "Low canopy spp"))
+                             levels = c("PIRU", "PIGL", "ABBA", "TSCA",
+                                        "Other conifer spp", "Deciduous spp"))
 
 pTreeSp <- tree_sp_haB %>% filter(Site != "WP") %>% 
           ggplot(aes(x = SampleEventNum, y = BA_m2ha, fill = sppgrp))+
               geom_col(position = position_stack(reverse = TRUE))+
               facet_wrap(~Site, ncol = 7, labeller = as_labeller(site_names))+
-          scale_fill_brewer(type="div")+
+  scale_fill_manual(name = "Species", labels = c("PIRU" = 'Picea rubens', "PIGL" = 'Picea glauca',
+                                                  'ABBA' = 'Abies balsamea', 'TSCA' = 'Tsuga canadensis'), 
+                     values = c("PIRU" = '#35b15a', "PIGL" = '#86ce7e',
+                                'ABBA' = '#ceecc5', 'TSCA' = '#d8e6f3', 
+                                'Deciduous spp' = "#d9c4ed", 'Other conifer spp' = '#9daee2'))+
+  scale_x_discrete(labels= c('1' = '1959', '2' = '2020s'))+ 
+  xlab('Year')+
+  ylab('Basal area ('~m^2*'/ha)')+
             theme_FHM()
 
- pTreeSp 
+ pTreeSp  
   
 #Saps
 table(sap_sp_ha$Species)
 sap_sp_haB <- sap_sp_ha %>% filter(Site != "WP") %>% 
-   mutate(sppgrp = case_when(Species %in% BET_spp ~ paste0("Betula spp"),
-                             Species %in% LOWCAN ~ paste0("Low canopy spp"),
-                             Species %in% OTHCON ~ paste0("Other conifer spp"),
-                             TRUE ~ paste0(Species)))
+  mutate(sppgrp = case_when(Species %in% HRDWDS ~ paste0("Deciduous spp"),
+                            Species %in% OTHCON ~ paste0("Other conifer spp"),
+                            TRUE ~ paste0(Species)))
  
 sap_sp_haB$sppgrp <- ordered(sap_sp_haB$sppgrp,
-                               levels = c("PIRU", "PIGL", "ABBA", "TSCA", "ACRU", "Betula spp",
-                                          "Other conifer spp", "Low canopy spp"))
+                             levels = c("PIRU", "PIGL", "ABBA", "TSCA",
+                                       "Other conifer spp", "Deciduous spp"))
+
  
  pSapSp <- sap_sp_haB %>% filter(Site != "WP") %>% 
-   ggplot(aes(x = SampleEventNum, y = BA_m2ha, fill = sppgrp))+
+   ggplot(aes(x = SampleEventNum, y = num_stems_ha, fill = sppgrp))+
    geom_col(position = position_stack(reverse = TRUE))+
    facet_wrap(~Site, ncol = 7, labeller = as_labeller(site_names))+
-   scale_fill_brewer(type="div")+
+   scale_fill_manual(name = "Species", labels = c("PIRU" = 'Picea rubens', "PIGL" = 'Picea glauca',
+                                                  'ABBA' = 'Abies balsamea', 'TSCA' = 'Tsuga canadensis'), 
+                     values = c("PIRU" = '#35b15a', "PIGL" = '#86ce7e',
+                                'ABBA' = '#ceecc5', 'TSCA' = '#d8e6f3', 
+                                'Deciduous spp' = "#d9c4ed", 'Other conifer spp' = '#9daee2'))+
+   scale_x_discrete(labels= c('1' = '1959', '2' = '2020s'))+ 
+   xlab('Year')+
+   ylab('Density (stems/ha)')+
    theme_FHM()
  
  pSapSp 
    
  #Seeds
- table(seeds4$Latin_name)
+table(seeds4$Latin_name)
 sBET_spp <- c("Betula papyrifera")
 sLOWCAN <- c("Acer pensylvanicum","Amelanchier","Sorbus decora")
 sOTHCON <-c("Pinus strobus")
- 
+sHRDWDS <- c("Acer pensylvanicum","Amelanchier","Sorbus decora", "Betula papyrifera", "Acer rubrum")
+
+
 seed_sp_haB <- seeds4 %>% filter(Site != "WP") %>% 
-  mutate(sppgrp = case_when(Latin_name %in% sBET_spp ~ paste0("Betula spp"),
-                            Latin_name %in% sLOWCAN ~ paste0("Low canopy spp"),
+  mutate(sppgrp = case_when(Latin_name %in% sHRDWDS ~ paste0("Deciduous spp"),
                             Latin_name %in% sOTHCON ~ paste0("Other conifer spp"),
                             TRUE ~ paste0(Latin_name)))
 
 seed_sp_haB$sppgrp <- ordered(seed_sp_haB$sppgrp,
-                             levels = c("Picea rubens", "Picea glauca", "Abies balsamea", "Tsuga canadensis", "Acer rubrum", "Betula spp",
-                                        "Other conifer spp", "Low canopy spp"))
+                             levels = c("Picea rubens", "Picea glauca", "Abies balsamea", "Tsuga canadensis",
+                                        "Other conifer spp", "Deciduous spp"))
+
+seed_sp_haB$Site <- ordered(seed_sp_haB$Site,
+                                levels = c("BH", "OP", "BM", "PM", "BC", "IB", "WP2"))
 
 pSeedSp <- seed_sp_haB %>% filter(Site != "WP") %>% 
   ggplot(aes(x = SampleEventNum, y = den_m2, fill = sppgrp))+
   geom_col(position = position_stack(reverse = TRUE))+
   facet_wrap(~Site, ncol = 7, labeller = as_labeller(site_names))+
-  scale_fill_brewer(type="div")+
+  scale_fill_manual(name = "Species", values = c("Picea rubens" = '#35b15a', "Picea glauca" = '#86ce7e',
+                               'Abies balsamea' = '#ceecc5', 'Tsuga canadensis' = '#d8e6f3', 
+                               'Deciduous spp' = "#d9c4ed", 'Other conifer spp' = '#9daee2'))+
+  scale_x_discrete(labels= c('1' = '1959', '2' = '2020s'))+ 
+  xlab('Year')+
+  ylab('Density (stems/'~m^2*')')+
   theme_FHM()
 
 pSeedSp 
+
+#Combine into one plot using patchwork package
+
+pComp <- pTreeSp/pSapSp/pSeedSp +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'A')
+pComp
 
 #Plotting percent relative change in composition: Use __C dataset with added zeros: tree_sp_haC, sap_sp_haC, seedsC
 #Calculate total BA/density per site and divide to get % BA by species per visit
@@ -853,22 +907,22 @@ tree_sp_haC4 <- tree_sp_haC3 %>% mutate(Rel_BA = BA_m2ha/Tot_BA) %>%
                                  mutate(stage = "Tree") %>% 
   filter(Site != "WP")
                                  
-tree_sp_haC5 <- tree_sp_haC4 %>% select(-c(BA_m2ha, Tot_BA, SampleYear)) %>% 
+tree_sp_haC5 <- tree_sp_haC4 %>% dplyr::select(-c(BA_m2ha, Tot_BA, SampleYear)) %>% 
                                  pivot_wider(names_from = SampleEventNum, values_from = Rel_BA) %>% 
-                                 select("Site", "Species", "stage", "1","2") %>% droplevels()
+                                 dplyr::select("Site", "Species", "stage", "1","2") %>% droplevels()
                               
 #Saps                 
-sap_sp_haC2 <- sap_sp_haC %>% group_by(Site, SampleEventNum) %>% summarise(Tot_BA = sum(BA_m2ha))
+sap_sp_haC2 <- sap_sp_haC %>% group_by(Site, SampleEventNum) %>% summarise(Tot_den = sum(num_stems_ha))
 
 sap_sp_haC3 <- left_join(sap_sp_haC, sap_sp_haC2, by = c("Site", "SampleEventNum"))
 
-sap_sp_haC4 <- sap_sp_haC3 %>% mutate(Rel_BA = BA_m2ha/Tot_BA) %>% 
+sap_sp_haC4 <- sap_sp_haC3 %>% mutate(Rel_den = num_stems_ha/Tot_den) %>% 
   mutate(stage = "Sapling")%>% 
   filter(Site != "WP")
 
-sap_sp_haC5 <- sap_sp_haC4 %>% select(-c(BA_m2ha, Tot_BA, SampleYear)) %>% 
-                                pivot_wider(names_from = SampleEventNum, values_from = Rel_BA)%>% 
-                                select("Site", "Species", "stage", "1","2") %>% droplevels()
+sap_sp_haC5 <- sap_sp_haC4 %>% dplyr::select(-c(num_stems_ha, Tot_den, SampleYear)) %>% 
+                                pivot_wider(names_from = SampleEventNum, values_from = Rel_den)%>% 
+                                dplyr::select("Site", "Species", "stage", "1","2") %>% droplevels()
 
 #Seeds
 seedsC2 <- seedsC %>% group_by(Site, SampleEventNum) %>% summarise(Tot_den = sum(den_m2))
@@ -879,9 +933,9 @@ seedsC4 <- seedsC3 %>% mutate(Rel_den = den_m2/Tot_den) %>%
   mutate(stage = "Seedling")%>% 
   filter(Site != "WP")
 
-seedsC5 <- seedsC4 %>% select(-c(den_m2, Tot_den, SampleYear)) %>% 
+seedsC5 <- seedsC4 %>% dplyr::select(-c(den_m2, Tot_den, SampleYear)) %>% 
   pivot_wider(names_from = SampleEventNum, values_from = Rel_den) %>% 
-  select("Site", "Species", "stage", "1","2") %>% droplevels()
+  dplyr::select("Site", "Species", "stage", "1","2") %>% droplevels()
 
 seedsC5$Species <- recode(seedsC5$Species, 'Picea rubens' = "PIRU")
 seedsC5$Species <- recode(seedsC5$Species, "Picea glauca" = "PIGL")
@@ -901,12 +955,12 @@ TSScomb2 <- TSScomb %>% rename(Sample1 = "1") %>% rename(Sample2 = "2") %>%
                         #filter(perRelDiff != 0)
 
 #Fill in zeros for missing species detentions (for better plotting)
-TSScomb2w <- TSScomb2 %>% select(-c(Sample1, Sample2)) %>%  
+TSScomb2w <- TSScomb2 %>% dplyr::select(-c(Sample1, Sample2)) %>%  
                           pivot_wider(names_from = stage, values_from = perRelDiff, values_fill = 0) %>% 
                           mutate(sum = Tree+Sapling+Seedling) %>% 
                           filter(sum != 0)
 
-TSScomb3 <- TSScomb2w %>% select(-c(sum)) %>% pivot_longer(cols = 3:5, names_to = "stage", values_to = "perRelDiff")
+TSScomb3 <- TSScomb2w %>% dplyr::select(-c(sum)) %>% pivot_longer(cols = 3:5, names_to = "stage", values_to = "perRelDiff")
 TSScomb3$stage <- ordered(TSScomb3$stage,levels = c("Tree", "Sapling", "Seedling"))
 TSScomb3all <- TSScomb3
 TSScomb3gr <- TSScomb3
@@ -936,15 +990,17 @@ pTSS
 BET_spp <- c("BEAL", "BECO", "BEPA")
 LOWCAN <- c("ACPE", "ACSP", "AMELANCHIER", "PRPE", "SODE")
 OTHCON <-c("PIST","THOC")
+HRDWDS <- c("ACRU", "ACPE", "ACSP", "AMELANCHIER", "PRPE", "SODE","BEAL", "BECO", "BEPA")
 
-TSScomb3gr2 <- TSScomb3gr %>% mutate(sppgrp = case_when(Species %in% BET_spp ~ paste0("Betula spp"),
-                            Species %in% LOWCAN ~ paste0("Low canopy spp"),
-                            Species %in% OTHCON ~ paste0("Other conifer spp"),
-                            TRUE ~ paste0(Species)))
+TSScomb3gr2 <- TSScomb3gr %>% mutate(sppgrp = case_when(Species %in% HRDWDS ~ paste0("Deciduous spp"),
+                                                        Species %in% OTHCON ~ paste0("Other conifer spp"),
+                                                        TRUE ~ paste0(Species)))
 
 TSScomb3gr2$sppgrp <- ordered(TSScomb3gr2$sppgrp,
-                              levels = c("PIRU", "PIGL", "ABBA", "TSCA", "ACRU", "Betula spp",
-                                         "Other conifer spp", "Low canopy spp"))
+                              levels = c("PIRU", "PIGL", "ABBA", "TSCA",
+                                         "Other conifer spp", "Deciduous spp"))
+
+
 names(TSScomb3gr2)
 TSScomb3gr3 <- TSScomb3gr2 %>% group_by(Site, stage, sppgrp) %>% 
                                summarize(tot_diff = sum(perRelDiff))
@@ -953,12 +1009,12 @@ TSScomb3gr3 <- TSScomb3gr2 %>% group_by(Site, stage, sppgrp) %>%
 pTSSgr <- TSScomb3gr3 %>% 
   ggplot(aes(x = sppgrp, y = tot_diff*100, group = stage, fill = stage))+
   geom_col(position = position_dodge2())+
-  facet_wrap(~Site, ncol = 2, labeller = as_labeller(site_names), scales = "free_x")+
+  facet_wrap(~Site, ncol = 3, labeller = as_labeller(site_names), scales = "free_x")+
   geom_hline(yintercept = 0)+
   scale_fill_manual(name = "Stage", 
                     values = c("Seedling" = "#e5f5e0", "Sapling" = '#a1d99b', "Tree" = '#31a354'))+
-  theme(legend.position = c(1,0),
-        legend.justification = c(1,0),
+  theme(legend.position = c(.5,.2),
+        legend.justification = c(1,.2),
         axis.text.x = element_text(face = "italic"))+
   xlab('Species')+
   ylab(bquote('% Relative Change'))+
@@ -973,7 +1029,7 @@ pTSSgr
 #remove WP data (first plot, 20 x 100 m) and live trees only to match Davis
 names(trees)
 trees2 <- trees %>% filter(Site != "WP") %>%  filter(Status == "L") %>% 
-  select(-c(X,Y)) #may have to drop level, WP still floating around
+  dplyr::select(-c(X,Y)) #may have to drop level, WP still floating around
 table(trees2$Site)
 
 #set up dataset for later  calculations
@@ -1036,17 +1092,23 @@ boot_mod_all <- read.csv('C:/01_NETN/Forest_Health/R_Dev/Prelim_Davis_Prj/tables
 #BC_CI <- bootCI(boot_mod_BC) #function written to calculate confidence intervals on individual site dataframes
 
 boot_mod_all$Site <- ordered(boot_mod_all$Site,
-                             levels = c("BM", "PM", "BC",  "OP", "BH","IB", "WP2"))
+                             levels = c("BH", "OP", "BM", "PM", "BC", "IB", "WP2"))
 
 Box_den <- ggplot(data = boot_mod_all, aes(x = Site, y = density_ha))+
   geom_violin()+
-  geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+  geom_boxplot(width=0.2, color="grey", alpha=0.2) +
   geom_point(data = SumTable_ha %>% filter(Site != "WP"), 
-             aes(x = Site, y = density_ha, shape = SampleEventNum))+
-  scale_shape_manual(name = "Non-bootstrapped metric", labels = c("1" = '1959', "2" = '2020-2022'), 
-                     values = c("1" = 2, "2" = 1))+
-  labs(x = "Site", y = "stems/ha")+ 
-  theme_FHM()
+             aes(x = Site, y = density_ha, shape = SampleEventNum, fill = SampleEventNum))+
+  scale_shape_manual(values = c("1" = 24, "2" = 21), 
+                     name = "Non-bootstrapped metric", labels = c("1" = '1959', "2" = '2020-2022'))+
+  scale_fill_manual(values = c("1" = '#a1d99b', "2" = '#31a354'), 
+                     name = "Non-bootstrapped metric", labels = c("1" = '1959', "2" = '2020-2022'))+
+  labs(y = "stems/ha")+
+  theme(axis.title.x=element_blank(),
+        axis.text.x=element_blank(),
+        axis.ticks.x=element_blank())+
+  theme_FHM()+
+  ggtitle("Tree density")
 
 Box_den
 
@@ -1054,13 +1116,17 @@ names(boot_mod_all)
 
 Box_BA<- ggplot(data = boot_mod_all, aes(x = Site, y = BA_m2ha))+
   geom_violin()+
-  geom_boxplot(width=0.1, color="grey", alpha=0.2) +
+  geom_boxplot(width=0.2, color="grey", alpha=0.2) +
   geom_point(data = SumTable_ha %>% filter(Site != "WP"), 
-             aes(x = Site, y = BA_m2ha, shape = SampleEventNum))+
-  scale_shape_manual(name = "Non-bootstrapped metric", labels = c("1" = '1959', "2" = '2020-2022'), 
-                     values = c("1" = 2, "2" = 1))+
+             aes(x = Site, y = BA_m2ha, shape = SampleEventNum, fill = SampleEventNum))+
+  scale_shape_manual(values = c("1" = 24, "2" = 21), 
+                     name = "Non-bootstrapped metric", labels = c("1" = '1959', "2" = '2020-2022'))+
+  scale_fill_manual(values = c("1" = '#a1d99b', "2" = '#31a354'), 
+                     name = "Non-bootstrapped metric", labels = c("1" = '1959', "2" = '2020-2022'))+
   xlab('Site')+
+  scale_x_discrete(labels = site_names)+
   ylab(bquote('Basal area ('~m^2*'/ha)'))+ 
+  ggtitle("Tree basal area")+
   theme_FHM()
 
 Box_BA
@@ -1072,11 +1138,18 @@ Box_bio<- ggplot(data = boot_mod_all, aes(x = Site, y = biomass_Mgha))+
              aes(x = Site, y = biomass_Mgha, shape = SampleEventNum))+
   scale_shape_manual(name = "Non-bootstrapped metric", labels = c("1" = '1959', "2" = '2020-2022'), 
                      values = c("1" = 2, "2" = 1))+
+  
   xlab('Site')+
   ylab(bquote('Biomass Mg/ha)'))+ 
   theme_FHM()
 
 Box_bio
+
+#Combine as one figure using the patchwork package
+Box_den_ba <- Box_den/Box_BA +
+  plot_layout(guides = 'collect') +
+  plot_annotation(tag_levels = 'A')
+Box_den_ba
 
 
 # NETN Plot Data ----------------------------------------------------------
@@ -1086,7 +1159,7 @@ ANPtrees<- joinTreeData(park = "ACAD", from = 2019, QAQC = FALSE, status = "live
 names(ANPtrees)
 
 #Convert to frequency and basal area by species from the plot level to per hectare. ACAD plot is 225 m2.
-ANPtrees_ha <- ANPtrees %>% select(PlotCode, SampleYear, ScientificName, num_stems, BA_cm2) %>% 
+ANPtrees_ha <- ANPtrees %>% dplyr::select(PlotCode, SampleYear, ScientificName, num_stems, BA_cm2) %>% 
                             group_by(PlotCode, ScientificName, SampleYear) %>% 
                             summarise(sum_stems = sum(num_stems),
                                       sum_BA_cm2 = sum(BA_cm2),
@@ -1094,7 +1167,7 @@ ANPtrees_ha <- ANPtrees %>% select(PlotCode, SampleYear, ScientificName, num_ste
                                       PlotCode = first(PlotCode)) %>% 
                             mutate(num_stems_ha = sum_stems * (10000/225), 
                                    BA_m2ha = sum_BA_cm2/225) %>% 
-                            select(PlotCode, SampleYear, 
+                            dplyr::select(PlotCode, SampleYear, 
                                    ScientificName, num_stems_ha, BA_m2ha) 
 
 #Calculating relative basal area, frequency, and importance value for each site by species
@@ -1150,7 +1223,7 @@ ord_ANP3.5 <- ord_ANP3 %>% add_column(Species = 'blank', .after = 'ScientificNam
 
 #Getting physiographic class for NETN plots
 ACAD_events <- joinLocEvent(park = "ACAD", from = 2019, QAQC = FALSE)
-ACAD_events2 <- ACAD_events %>% select(PlotCode, PhysiographySummary)
+ACAD_events2 <- ACAD_events %>% dplyr::select(PlotCode, PhysiographySummary)
 
 ACAD_phys <- left_join(ANPplots, ACAD_events2, by = "PlotCode")
 table(ACAD_phys$PhysiographySummary)
@@ -1161,7 +1234,7 @@ table(ACAD_phys$PhysiographySummary)
 #use tree_sp_ha created earlier: all live stems >2.5cm DBH summed by species, site, and sample event. 
 #Includes duplicated 1959 WP data named as WP2
 #Make matrix with species on one axis and site+sampling event on the other
-ord_tree_sp_ha <- Comb_tree_event %>% select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
+ord_tree_sp_ha <- Comb_tree_event %>% dplyr::select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
   group_by(Site, Species, SampleEventNum) %>% 
   summarise(sum_stems = sum(num_stem),
             sum_BA_cm2 = sum(BA_cm2),
@@ -1170,7 +1243,7 @@ ord_tree_sp_ha <- Comb_tree_event %>% select(-c(NumSubplots, SubplotArea, Module
             SiteName = first(SiteName)) %>% 
   mutate(num_stems_ha = sum_stems * (10000/TotArea), 
          BA_m2ha = sum_BA_cm2/TotArea) %>% 
-  select(Site, SiteName, SampleEventNum, SampleYear, 
+  dplyr::select(Site, SiteName, SampleEventNum, SampleYear, 
          Species, num_stems_ha, BA_m2ha) 
 
 names(ord_tree_sp_ha)
@@ -1181,8 +1254,7 @@ ord_trees <- ord_tree_sp_ha %>% add_column(OrdSite = 'blank', .after = 'Site') %
                                                        SampleEventNum == 1 & Site == 'IB' ~ 'IB59',
                                                        SampleEventNum == 1 & Site == 'OP' ~ 'OP59',
                                                        SampleEventNum == 1 & Site == 'PM' ~ 'PM59',
-                                                       SampleEventNum == 1 & Site == 'WP' ~ 'WP59',
-                                                       SampleEventNum == 1 & Site == 'WP2' ~ 'WPXX',
+                                                       SampleEventNum == 1 & Site == 'WP2' ~ 'WP59',
                                                        SampleEventNum == 2 & Site == 'BC' ~ 'BC20',
                                                        SampleEventNum == 2 & Site == 'BM' ~ 'BM20',
                                                        SampleEventNum == 2 & Site == 'BH' ~ 'BH21',
@@ -1190,8 +1262,7 @@ ord_trees <- ord_tree_sp_ha %>% add_column(OrdSite = 'blank', .after = 'Site') %
                                                        SampleEventNum == 2 & Site == 'OP' ~ 'OP20',
                                                        SampleEventNum == 2 & Site == 'PM' ~ 'PM20',
                                                        SampleEventNum == 2 & Site == 'WP' ~ 'WP21',
-                                                       SampleEventNum == 2 & Site == 'WP2' ~ 'WP22')) %>% 
-                          filter(OrdSite != 'WPXX') #remove 1959 WP duplicate
+                                                       SampleEventNum == 2 & Site == 'WP2' ~ 'WP22')) 
 
 #Calculating relative basal area, frequency, and importance value for each site by species
 ord_trees2 <- ord_trees %>% group_by(Site, SampleEventNum) %>% summarise(Tot_stems = sum(num_stems_ha),
@@ -1200,12 +1271,14 @@ ord_trees3 <- left_join(ord_trees, ord_trees2, by = c("Site", "SampleEventNum"))
 
 ord_trees4 <- ord_trees3 %>% mutate(Rel_freq = num_stems_ha/Tot_stems) %>% 
   mutate(Rel_BA = BA_m2ha/Tot_BA) %>% 
-  mutate(Imp_val = (Rel_freq + Rel_BA)/2)
+  mutate(Imp_val = (Rel_freq + Rel_BA)/2) %>% ungroup() %>% 
+  droplevels()
 
-
+str(ord_trees4)
+table(ord_trees4$Site)
 # Relative Basal Area -----------------------------------------------------
 
-ord_BA_wide <- ord_trees4 %>% ungroup() %>% select(OrdSite, Species, Rel_BA) %>% 
+ord_BA_wide <- ord_trees4 %>% ungroup() %>% dplyr::select(OrdSite, Species, Rel_BA) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = Species,
               values_from = Rel_BA,
@@ -1218,34 +1291,34 @@ BA_sp_rank <- ord_BA_wide %>% map_dfc(sum) %>%
 print(arrange(BA_sp_rank, desc(Rel_BA)))
 
 #removing least common species (don't want a lot of zeros): includes top 8 species                                    
-ord_BA_wide2 <- ord_BA_wide %>% select(-c(SODE, PRPE, BECO, AMELANCHIER, ACPE, BEAL, ACSP)) 
+ord_BA_wide2 <- ord_BA_wide %>% dplyr::select(-c(SODE, PRPE, BECO, AMELANCHIER, ACPE, BEAL, ACSP)) 
 
 sort(names(ord_BA_wide2))
 
 #PCA: first option in AB hw #7
 #Based on slide 41 of wk10 Multivariate, should use PCA
 
-#All species included
-BA_pcaALL <- princomp(ord_BA_wide, cor=T)
-summary(BA_pcaALL)#gives proportion of variance explained by each PC; 2 gives you 41%, 3 gives you 56%
-plot(BA_pcaALL)
-biplot(BA_pcaALL)
-loadings(BA_pcaALL)
-
-#using ggfortify package + ggplot to get a decent plot
-BA_pca_ALL_df <- fortify(BA_pcaALL) %>% select(Comp.1, Comp.2) %>%  rownames_to_column(var = "OrdSite")
-
-#ggrepel package for optimizing labels
-options(ggrepel.max.overlaps = Inf)#Prints all labels even if overlap
-
-BA_ord_plotALL <- BA_pca_ALL_df %>% ggplot(aes(x=Comp.1, y=Comp.2, label = OrdSite))+
-  geom_point()+
-  coord_cartesian(clip = "off") +
-  geom_text_repel(xlim = c(-Inf, NA),
-                  ylim = c(-Inf, Inf))+ #labels can overlap plot borders
-  theme_FHM()
-
-BA_ord_plotALL
+#All species included: **Not working because removed extra WP site and now there are more species than sites**
+# BA_pcaALL <- princomp(ord_BA_wide, cor=T)
+# summary(BA_pcaALL)#gives proportion of variance explained by each PC; 2 gives you 41%, 3 gives you 56%
+# plot(BA_pcaALL)
+# biplot(BA_pcaALL)
+# loadings(BA_pcaALL)
+# 
+# #using ggfortify package + ggplot to get a decent plot
+# BA_pca_ALL_df <- fortify(BA_pcaALL) %>% dplyr::select(Comp.1, Comp.2) %>%  rownames_to_column(var = "OrdSite")
+# 
+# #ggrepel package for optimizing labels
+# options(ggrepel.max.overlaps = Inf)#Prints all labels even if overlap
+# 
+# BA_ord_plotALL <- BA_pca_ALL_df %>% ggplot(aes(x=Comp.1, y=Comp.2, label = OrdSite))+
+#   geom_point()+
+#   coord_cartesian(clip = "off") +
+#   geom_text_repel(xlim = c(-Inf, NA),
+#                   ylim = c(-Inf, Inf))+ #labels can overlap plot borders
+#   theme_FHM()
+# 
+# BA_ord_plotALL
 
 #Top 8 species
 BA_pca <- princomp(ord_BA_wide2, cor=T)
@@ -1255,7 +1328,7 @@ biplot(BA_pca)
 loadings(BA_pca)
 
 #using ggfortify package + ggplot to get a decent plot
-BA_pca_df <- fortify(BA_pca) %>% select(Comp.1, Comp.2) %>%  rownames_to_column( var = "OrdSite")
+BA_pca_df <- fortify(BA_pca) %>% dplyr::select(Comp.1, Comp.2) %>%  rownames_to_column( var = "OrdSite")
 
 #ggrepel package for optimizing labels
 
@@ -1269,7 +1342,7 @@ BA_ord_plot <- BA_pca_df %>% ggplot(aes(x=Comp.1, y=Comp.2, label = OrdSite))+
 BA_ord_plot
 
 # Relative Frequency ------------------------------------------------------
-ord_F_wide <- ord_trees4 %>% ungroup() %>% select(OrdSite, Species, Rel_freq) %>% 
+ord_F_wide <- ord_trees4 %>% ungroup() %>% dplyr::select(OrdSite, Species, Rel_freq) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = Species,
               values_from = Rel_freq,
@@ -1282,30 +1355,30 @@ F_sp_rank <- ord_F_wide %>% map_dfc(sum) %>%
 print(arrange(F_sp_rank, desc(Rel_F)))
 
 #removing least common species (don't want a lot of zeros): includes top 8 species                                    
-#ord_BA_wide2 <- ord_BA_wide %>% select(-c(SODE, PRPE, BECO, AMELANCHIER, ACPE, BEAL, ACSP)) 
+#ord_BA_wide2 <- ord_BA_wide %>% dplyr::select(-c(SODE, PRPE, BECO, AMELANCHIER, ACPE, BEAL, ACSP)) 
 
 #PCA: first option in AB hw #7
 #Based on slide 41 of wk10 Multivariate, should use PCA
-F_pca <- princomp(ord_F_wide, cor=T) # all species included
-summary(F_pca)#gives proportion of variance explained by each PC; 2 gives you 47%, 3 gives you 62%
-plot(F_pca)
-biplot(F_pca)
-loadings(F_pca)
-
-#using ggfortify package + ggplot to get a decent plot
-F_pca_df <- fortify(F_pca) %>% select(Comp.1, Comp.2) %>% rownames_to_column(var = "OrdSite")
-
-F_ord_plot <- F_pca_df %>% ggplot(aes(x=Comp.1, y=Comp.2, label = OrdSite))+
-  geom_point()+
-  coord_cartesian(clip = "off") +
-  geom_text_repel(xlim = c(-Inf, NA),
-                  ylim = c(-Inf, Inf))+ #labels can overlap plot borders
-  theme_FHM()
-
-F_ord_plot
+# F_pca <- princomp(ord_F_wide, cor=T) # all species included
+# summary(F_pca)#gives proportion of variance explained by each PC; 2 gives you 47%, 3 gives you 62%
+# plot(F_pca)
+# biplot(F_pca)
+# loadings(F_pca)
+# 
+# #using ggfortify package + ggplot to get a decent plot
+# F_pca_df <- fortify(F_pca) %>% dplyr::select(Comp.1, Comp.2) %>% rownames_to_column(var = "OrdSite")
+# 
+# F_ord_plot <- F_pca_df %>% ggplot(aes(x=Comp.1, y=Comp.2, label = OrdSite))+
+#   geom_point()+
+#   coord_cartesian(clip = "off") +
+#   geom_text_repel(xlim = c(-Inf, NA),
+#                   ylim = c(-Inf, Inf))+ #labels can overlap plot borders
+#   theme_FHM()
+# 
+# F_ord_plot
 
 # Importance Value ------------------------------------------------------
-ord_IV_wide <- ord_trees4 %>% ungroup() %>% select(OrdSite, Species, Imp_val) %>% 
+ord_IV_wide <- ord_trees4 %>% ungroup() %>% dplyr::select(OrdSite, Species, Imp_val) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = Species,
               values_from = Imp_val,
@@ -1319,23 +1392,23 @@ print(arrange(IV_sp_rank, desc(Rel_IV)))
 
 #PCA: first option in AB hw #7
 #Based on slide 41 of wk10 Multivariate, should use PCA
-IV_pca <- princomp(ord_IV_wide, cor=T) # all species included
-summary(IV_pca)#gives proportion of variance explained by each PC; 2 gives you 45%, 3 gives you 59%
-plot(IV_pca)
-biplot(IV_pca)
-loadings(IV_pca)
-
-#using ggfortify package + ggplot to get a decent plot
-IV_pca_df <- fortify(IV_pca) %>% select(Comp.1, Comp.2) %>% rownames_to_column(var = "OrdSite")
-
-IV_ord_plot <- IV_pca_df %>% ggplot(aes(x=Comp.1, y=Comp.2, label = OrdSite))+
-  geom_point()+
-  coord_cartesian(clip = "off") +
-  geom_text_repel(xlim = c(-Inf, NA),
-                  ylim = c(-Inf, Inf))+ #labels can overlap plot borders
-  theme_FHM()
-
-IV_ord_plot
+# IV_pca <- princomp(ord_IV_wide, cor=T) # all species included
+# summary(IV_pca)#gives proportion of variance explained by each PC; 2 gives you 45%, 3 gives you 59%
+# plot(IV_pca)
+# biplot(IV_pca)
+# loadings(IV_pca)
+# 
+# #using ggfortify package + ggplot to get a decent plot
+# IV_pca_df <- fortify(IV_pca) %>% dplyr::select(Comp.1, Comp.2) %>% rownames_to_column(var = "OrdSite")
+# 
+# IV_ord_plot <- IV_pca_df %>% ggplot(aes(x=Comp.1, y=Comp.2, label = OrdSite))+
+#   geom_point()+
+#   coord_cartesian(clip = "off") +
+#   geom_text_repel(xlim = c(-Inf, NA),
+#                   ylim = c(-Inf, Inf))+ #labels can overlap plot borders
+#   theme_FHM()
+# 
+# IV_ord_plot
 
 # Species Composition: Pooled Betula papyrifera and Betula cordifolia (changed from original all Betula) ----------------------------------
 
@@ -1353,7 +1426,7 @@ table(Comb_tree_event_BET$Species)
 
 #BEPA and BECO pooled, only saplings >2.5 to 10 cm
 sap_sp_ha_BET <- Comb_tree_event_BET %>% filter(size_class =='d2.5_9.9') %>% 
-                                          select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
+                                          dplyr::select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
                                           group_by(Site, Species, SampleEventNum) %>% 
                                           summarise(sum_stems = sum(num_stem),
                                                     sum_BA_cm2 = sum(BA_cm2),
@@ -1362,7 +1435,7 @@ sap_sp_ha_BET <- Comb_tree_event_BET %>% filter(size_class =='d2.5_9.9') %>%
                                                     SiteName = first(SiteName)) %>% 
                                           mutate(num_stems_ha = sum_stems * (10000/TotArea), 
                                                  BA_m2ha = sum_BA_cm2/TotArea) %>% 
-                                          select(Site, SiteName, SampleEventNum, SampleYear, 
+                                          dplyr::select(Site, SiteName, SampleEventNum, SampleYear, 
                                                  Species, num_stems_ha, BA_m2ha) 
 
 ord_sap_BET <- sap_sp_ha_BET %>% add_column(OrdSite = 'blank', .after = 'Site') %>%
@@ -1395,7 +1468,7 @@ ord_sap_BET4 <- ord_sap_BET3 %>% mutate(Rel_freq = num_stems_ha/Tot_stems) %>%
 
 # Pooled BEPA/BECO saplings, importance value  NMDS-----------------------------------------------------
 
-ord_IV_sap_wide <- ord_sap_BET4 %>% ungroup() %>% select(OrdSite, Species, Imp_val) %>% 
+ord_IV_sap_wide <- ord_sap_BET4 %>% ungroup() %>% dplyr::select(OrdSite, Species, Imp_val) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = Species,
               values_from = Imp_val,
@@ -1429,7 +1502,7 @@ IVBETsap_mMDS_plot
 
 #top 8
 #removing least common species (don't want a lot of zeros): includes top 8 species                                    
-ord_IV_sap_wide2 <- ord_IV_sap_wide %>% select(-c(AMELANCHIER, ACSP, SODE, PRPE)) 
+ord_IV_sap_wide2 <- ord_IV_sap_wide %>% dplyr::select(-c(AMELANCHIER, ACSP, SODE, PRPE)) 
 
 mMDS_IVsap2 <- metaMDS(ord_IV_sap_wide2, distance="bray", k=2)
 ordiplot(mMDS_IVsap2)
@@ -1457,7 +1530,7 @@ df1 <- trees59qmd2.5 %>% filter(Site == 'IB')
 
 
 # Pooled BEPA/BECO all >2.5, importance value NMDS ------------------------
-sp_ha_BET <- Comb_tree_event_BET %>% select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
+sp_ha_BET <- Comb_tree_event_BET %>% dplyr::select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
   group_by(Site, Species, SampleEventNum) %>% 
   summarise(sum_stems = sum(num_stem),
             sum_BA_cm2 = sum(BA_cm2),
@@ -1466,7 +1539,7 @@ sp_ha_BET <- Comb_tree_event_BET %>% select(-c(NumSubplots, SubplotArea, Module,
             SiteName = first(SiteName)) %>% 
   mutate(num_stems_ha = sum_stems * (10000/TotArea), 
          BA_m2ha = sum_BA_cm2/TotArea) %>% 
-  select(Site, SiteName, SampleEventNum, SampleYear, 
+  dplyr::select(Site, SiteName, SampleEventNum, SampleYear, 
          Species, num_stems_ha, BA_m2ha) 
 
 ord_all_BET <- sp_ha_BET %>% add_column(OrdSite = 'blank', .after = 'Site') %>%
@@ -1497,7 +1570,7 @@ ord_all_BET4 <- ord_all_BET3 %>% mutate(Rel_freq = num_stems_ha/Tot_stems) %>%
   mutate(Rel_BA = BA_m2ha/Tot_BA) %>% 
   mutate(Imp_val = (Rel_freq + Rel_BA)/2)
 
-ord_IV_all_wide <- ord_all_BET4 %>% ungroup() %>% select(OrdSite, Species, Imp_val) %>% 
+ord_IV_all_wide <- ord_all_BET4 %>% ungroup() %>% dplyr::select(OrdSite, Species, Imp_val) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = Species,
               values_from = Imp_val,
@@ -1535,7 +1608,7 @@ IV_all_sp_rank <- ord_IV_all_wide %>% map_dfc(sum) %>%
   pivot_longer(cols = everything(), names_to = "Species",
                values_to = "Imp_val")
 print(arrange(IV_all_sp_rank, desc(Imp_val)))
-ord_IV_all_wide2 <- ord_IV_all_wide %>% select(-c(AMELANCHIER, PIST, BEAL, ACSP, SODE, PRPE)) 
+ord_IV_all_wide2 <- ord_IV_all_wide %>% dplyr::select(-c(AMELANCHIER, PIST, BEAL, ACSP, SODE, PRPE)) 
 
 mMDS_IVall2 <- metaMDS(ord_IV_all_wide2, distance="bray", k=2)
 ordiplot(mMDS_IVall2)
@@ -1561,7 +1634,7 @@ df1 <- trees59qmd2.5 %>% filter(Site == 'IB')
 
 # Species Composition: >10cm DBH only -------------------------------------
 
-tree10_sp_ha <- Comb_tree_event %>% filter(size_class != 'd2.5_9.9') %>% select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
+tree10_sp_ha <- Comb_tree_event %>% filter(size_class != 'd2.5_9.9') %>% dplyr::select(-c(NumSubplots, SubplotArea, Module, size_class, DBH_QMD)) %>% 
                                     group_by(Site, Species, SampleEventNum) %>% 
                                     summarise(sum_stems = sum(num_stem),
                                               sum_BA_cm2 = sum(BA_cm2),
@@ -1570,7 +1643,7 @@ tree10_sp_ha <- Comb_tree_event %>% filter(size_class != 'd2.5_9.9') %>% select(
                                               SiteName = first(SiteName)) %>% 
                                     mutate(num_stems_ha = sum_stems * (10000/TotArea), 
                                            BA_m2ha = sum_BA_cm2/TotArea) %>% 
-                                    select(Site, SiteName, SampleEventNum, SampleYear, 
+                                    dplyr::select(Site, SiteName, SampleEventNum, SampleYear, 
                                            Species, num_stems_ha, BA_m2ha) 
 
 ord_10trees <- tree10_sp_ha %>% add_column(OrdSite = 'blank', .after = 'Site') %>%
@@ -1604,7 +1677,7 @@ ord_10trees4 <- ord_10trees3 %>% mutate(Rel_freq = num_stems_ha/Tot_stems) %>%
 #write.csv(ord_10trees4, './tables/Ord_data_10cm.csv', row.names = FALSE)
 
 # Importance Value for all species------------------------------------------------------
-ord_10IV_wide <- ord_10trees4 %>% ungroup() %>% select(OrdSite, Species, Imp_val) %>% 
+ord_10IV_wide <- ord_10trees4 %>% ungroup() %>% dplyr::select(OrdSite, Species, Imp_val) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = Species,
               values_from = Imp_val,
@@ -1625,7 +1698,7 @@ biplot(IV10_pca)
 loadings(IV10_pca)
 
 #using ggfortify package + ggplot to get a decent plot
-IV10_pca_df <- fortify(IV10_pca) %>% select(Comp.1, Comp.2) %>% rownames_to_column(var = "OrdSite")
+IV10_pca_df <- fortify(IV10_pca) %>% dplyr::select(Comp.1, Comp.2) %>% rownames_to_column(var = "OrdSite")
 
 IV10_ord_plot <- IV10_pca_df %>% ggplot(aes(x=Comp.1, y=Comp.2, label = OrdSite))+
   geom_point()+
@@ -1641,16 +1714,16 @@ IV10_ord_plot
 
 #ord_ANP4 <- ord_ANP3.5 %>%  filter(PlotCode %in% ANPsprucePlots)
 
-#ord_ANP5 <- ord_ANP4 %>% rename(OrdSite =  PlotCode) %>% ungroup() %>% select(-ScientificName)
+#ord_ANP5 <- ord_ANP4 %>% rename(OrdSite =  PlotCode) %>% ungroup() %>% dplyr::select(-ScientificName)
 
-#ord_10trees5 <- ord_10trees4 %>% ungroup() %>% select(-c(Site, SiteName, SampleEventNum))
+#ord_10trees5 <- ord_10trees4 %>% ungroup() %>% dplyr::select(-c(Site, SiteName, SampleEventNum))
 
 #names(ord_10trees5)
 #names(ord_ANP5)
 
 #ordNETN <- rbind(ord_10trees5, ord_ANP5)
 
-#ordNETN_wide <- ordNETN %>% ungroup() %>% select(OrdSite, Species, Imp_val) %>% 
+#ordNETN_wide <- ordNETN %>% ungroup() %>% dplyr::select(OrdSite, Species, Imp_val) %>% 
   #arrange(OrdSite) %>% 
   #pivot_wider(names_from = Species,
               #values_from = Imp_val,
@@ -1671,7 +1744,7 @@ IV10_ord_plot
 #loadings(NETN_pca)
 
 #using ggfortify package + ggplot to get a decent plot
-#NETN_pca_df <- fortify(NETN_pca) %>% select(Comp.1, Comp.2) %>% rownames_to_column(var = "OrdSite")
+#NETN_pca_df <- fortify(NETN_pca) %>% dplyr::select(Comp.1, Comp.2) %>% rownames_to_column(var = "OrdSite")
 
 #NETN_pca_plot <- NETN_pca_df %>% ggplot(aes(x=Comp.1, y=Comp.2, label = OrdSite))+
   #geom_point()+
@@ -1691,7 +1764,7 @@ IV10_ord_plot
 
 #Basal area for 2020s visits
 ord_10BA_wide <- ord_10trees4 %>% ungroup() %>% 
-  select(OrdSite, Species, Rel_BA) %>% 
+  dplyr::select(OrdSite, Species, Rel_BA) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = Species,
               values_from = Rel_BA,
@@ -1706,7 +1779,7 @@ BA_10sp_rank <- ord_10BA_wide %>% map_dfc(sum) %>%
 print(arrange(BA_10sp_rank, desc(Rel_BA))) # Only 11 species
 
 #removing least common species (don't want a lot of zeros): includes top 7 species                                    
-ord_10BA_wide2 <- ord_10BA_wide %>% select(-c(AMELANCHIER, ACPE, BECO, BEAL, PIST)) 
+ord_10BA_wide2 <- ord_10BA_wide %>% dplyr::select(-c(AMELANCHIER, ACPE, BECO, BEAL, PIST)) 
 sort(names(ord_10BA_wide2))
 
 #metaMDS: Shawn says commonly used for vegetation 
@@ -1717,7 +1790,7 @@ text(mMDS_BA10)
 
 # Relative Basal Area >2.5cm DBH, splitting by event-----------------------------------------------------
 #Basal Area MNDS 1959 sites, top 8 species
-ord_BA_wideOLD <- ord_trees4 %>% ungroup() %>% filter(SampleEventNum == 1) %>% select(OrdSite, Species, Rel_BA) %>% 
+ord_BA_wideOLD <- ord_trees4 %>% ungroup() %>% filter(SampleEventNum == 1) %>% dplyr::select(OrdSite, Species, Rel_BA) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = Species,
               values_from = Rel_BA,
@@ -1730,7 +1803,7 @@ BA_sp_rankOLD <- ord_BA_wideOLD %>% map_dfc(sum) %>%
 print(arrange(BA_sp_rankOLD, desc(Rel_BA)))
 
 #removing least common species (don't want a lot of zeros): includes top 8 species                                    
-ord_BA_wideOLD2 <- ord_BA_wideOLD %>% select(-c(BEAL, THOC, ACSP)) 
+ord_BA_wideOLD2 <- ord_BA_wideOLD %>% dplyr::select(-c(BEAL, THOC, ACSP)) 
 
 mMDS_BAold <- metaMDS(ord_BA_wideOLD2, distance="bray", k=2)# error stress nearly zero
 ordiplot(mMDS_BAold)# doesn't work
@@ -1761,7 +1834,7 @@ BA_mMDS_plot
 #will use all individual >2.5
 #will pool BEPA/BECO
 
-sz_ha_BET <- Comb_tree_event_BET %>% select(-c(NumSubplots, SubplotArea, Module, DBH_QMD)) %>% 
+sz_ha_BET <- Comb_tree_event_BET %>% dplyr::select(-c(NumSubplots, SubplotArea, Module, DBH_QMD)) %>% 
                                          group_by(Site, size_class, SampleEventNum) %>% 
                                          summarise(sum_stems = sum(num_stem),
                                                    sum_BA_cm2 = sum(BA_cm2),
@@ -1770,7 +1843,7 @@ sz_ha_BET <- Comb_tree_event_BET %>% select(-c(NumSubplots, SubplotArea, Module,
                                                    SiteName = first(SiteName)) %>% 
                                          mutate(num_stems_ha = sum_stems * (10000/TotArea), 
                                                 BA_m2ha = sum_BA_cm2/TotArea) %>% 
-                                         select(Site, SiteName, SampleEventNum, SampleYear, 
+                                         dplyr::select(Site, SiteName, SampleEventNum, SampleYear, 
                                                 size_class, num_stems_ha, BA_m2ha) 
 
 ord_sz_BET <- sz_ha_BET %>% add_column(OrdSite = 'blank', .after = 'Site') %>%
@@ -1804,7 +1877,7 @@ ord_sz_BET4 <- ord_sz_BET3 %>% mutate(Rel_freq = num_stems_ha/Tot_stems) %>%
 
 # Diameter dist. Relative Basal Area NMDS-----------------------------------------------------
 
-ord_BA_sz_wide <- ord_sz_BET4 %>% ungroup() %>% select(OrdSite, size_class, Rel_BA) %>% 
+ord_BA_sz_wide <- ord_sz_BET4 %>% ungroup() %>% dplyr::select(OrdSite, size_class, Rel_BA) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = size_class,
               values_from = Rel_BA,
@@ -1844,7 +1917,7 @@ BAsz_mMDS_plot
 
 # Diameter dist. Relative Density Area NMDS-----------------------------------------------------
 
-ord_den_sz_wide <- ord_sz_BET4 %>% ungroup() %>% select(OrdSite, size_class, Rel_freq) %>% 
+ord_den_sz_wide <- ord_sz_BET4 %>% ungroup() %>% dplyr::select(OrdSite, size_class, Rel_freq) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = size_class,
               values_from = Rel_freq,
@@ -1858,11 +1931,22 @@ ordiplot(mMDS_densz)
 library(ggvegan)#this needs to be loaded here in order for the fortify() to work on an NMDS object
 mMDS_densz_gg <- fortify(mMDS_densz) #transforms ordination results form ggplot can use
 
-mMDS_densz_gg2 <- mMDS_densz_gg %>% filter(Score == "sites")
+mMDS_densz_gg2 <- mMDS_densz_gg %>% filter(Score == "sites") %>% 
+  mutate(SiteName = str_sub(Label, 1,2)) %>% 
+  mutate(SampleEventNum = str_sub(Label, -2)) %>% 
+  mutate(SampleEventNum = case_when(SampleEventNum > 50 ~ 1,
+                                    SampleEventNum <50 ~ 2)) 
+
+mMDS_densz_gg2$SampleEventNum <- as.factor(mMDS_densz_gg2$SampleEventNum)
+mMDS_densz_gg2$SiteName <- as.factor(mMDS_densz_gg2$SiteName)
+str(mMDS_densz_gg2)
 
 densz_mMDS_plot <- mMDS_densz_gg2 %>% ggplot(aes(x=NMDS1, y=NMDS2, label=Label))+
   geom_point()+
   coord_cartesian(clip = "off") +
+  geom_path(aes(group = SiteName), color="black",
+            arrow = arrow(type = "closed",
+                          length=unit(0.075, "inches")))+
   geom_text_repel(xlim = c(NA, NA),
                   ylim = c(NA, NA))+ 
   scale_x_continuous(breaks = 1:2, # add buffer to make space for labels
@@ -1872,7 +1956,7 @@ densz_mMDS_plot
 
 # Diameter dist. importance value  NMDS-----------------------------------------------------
 
-ord_IV_sz_wide <- ord_sz_BET4 %>% ungroup() %>% select(OrdSite, size_class, Imp_val) %>% 
+ord_IV_sz_wide <- ord_sz_BET4 %>% ungroup() %>% dplyr::select(OrdSite, size_class, Imp_val) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = size_class,
               values_from = Imp_val,
@@ -1891,6 +1975,7 @@ mMDS_IVsz_gg2 <- mMDS_IVsz_gg %>% filter(Score == "sites")
 IVsz_mMDS_plot <- mMDS_IVsz_gg2 %>% ggplot(aes(x=NMDS1, y=NMDS2, label=Label))+
   geom_point()+
   coord_cartesian(clip = "off") +
+  
   geom_text_repel(xlim = c(NA, NA),
                   ylim = c(NA, NA))+ 
   scale_x_continuous(breaks = 1:2, # add buffer to make space for labels
@@ -1898,9 +1983,23 @@ IVsz_mMDS_plot <- mMDS_IVsz_gg2 %>% ggplot(aes(x=NMDS1, y=NMDS2, label=Label))+
   theme_FHM()
 IVsz_mMDS_plot
 
+
+
+BAsz_mMDS_plot <- mMDS_BAsz_gg2 %>% arrange(desc(Label)) %>% ggplot(aes(x=NMDS1, y=NMDS2, label=Label))+
+  geom_point(aes(color = SampleEventNum, size = 2), show.legend = FALSE)+
+  coord_cartesian(clip = "off") +
+  geom_path(aes(group = SiteName), color="black",
+            arrow = arrow(type = "closed",
+                          length=unit(0.075, "inches")))+
+  geom_text_repel(xlim = c(NA, NA),
+                  ylim = c(NA, NA))+ 
+  scale_x_continuous(breaks = 1:2, # add buffer to make space for labels
+                     expand = expansion(mult = 0.5)) + #labels can overlap plot borders
+  theme_FHM()
+BAsz_mMDS_plot
 # Diameter dist. importance value  NMDS, attempting only 2020's visits-----------------------------------------------------
 
-ord_IV_sz_wide2 <- ord_sz_BET4 %>% filter(SampleEventNum == 2) %>%  ungroup() %>% select(OrdSite, size_class, Imp_val) %>% 
+ord_IV_sz_wide2 <- ord_sz_BET4 %>% filter(SampleEventNum == 2) %>%  ungroup() %>% dplyr::select(OrdSite, size_class, Imp_val) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = size_class,
               values_from = Imp_val,
@@ -1928,7 +2027,7 @@ IVsz_mMDS_plot2
 
 # Diameter dist. importance value  NMDS, attempting only 1959's visits-----------------------------------------------------
 
-ord_IV_sz_wide1 <- ord_sz_BET4 %>% filter(SampleEventNum == 1) %>%  ungroup() %>% select(OrdSite, size_class, Imp_val) %>% 
+ord_IV_sz_wide1 <- ord_sz_BET4 %>% filter(SampleEventNum == 1) %>%  ungroup() %>% dplyr::select(OrdSite, size_class, Imp_val) %>% 
   arrange(OrdSite) %>% 
   pivot_wider(names_from = size_class,
               values_from = Imp_val,
