@@ -1,7 +1,7 @@
 ---
 title: "Ch1 exploratory figures subset"
 author: "Camilla Seirup"
-date: "2023-10-15"
+date: "2023-11-09"
 output: html_document
 ---
 ```{r setup, include=FALSE}
@@ -29,50 +29,36 @@ source("AgeStructure_DisturbanceChrono.R")
 ```
 
 ## Summary Figures
+```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
+print(treesap_map)
+```
+
+Figure 2. Tree  stem maps at seven mature red spruce sites in coastal Maine, USA (individuals >10 cm DBH). Shaded blue rectangles indicated the density of sapling  stems in 5 x 10 m quadrants of the plot (individuals between 2.5 cm and 10 cm DBH). Figure is not to scale.
+
 
 ```{r, echo=FALSE, warning=FALSE, out.height="100%", fig.height = 4.5, fig.width = 7.5}
 print(Comp_tree_dist_plot)
 ```
 
-Figure 2. Stem density distributions from the 1959 sampling and 2020-2022 resampling of seven spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
+Figure 3. Stem density distributions from the 1959 sampling and 2020-2022 resampling of seven spruce dominated stands in Acadia National Park, Mount Desert Island, Maine. The figure shows tree density by diameter at breast height at 10 cm increments. The smallest increment, 2.5 to 10 cm, was constrained by historic sampling methods.
 
 ```{r, echo=FALSE, warning=FALSE, out.height="100%", fig.height = 4.5, fig.width = 7.5}
-#print(Log10_tree_dist_plot) #Figure 2b. Log10 stem density distributions from the 1959 sampling and 2020-2022 resampling to better determine the shape of the curve. Likely not needed?
-
+print(dist_plot_no_saps) 
 ```
 
+#Figure 3 *Option 2*. Stem density distrubtion W/O the 2.5 to 10 cm DBH size class (saplings)
 
-```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
-#print(stem_mapV)#Figure 3. Stem maps for the 2020-2022 sampling events.
+```{r, echo=FALSE, warning=FALSE, out.height="100%", fig.height = 4.5, fig.width = 7.5}
+print(Comp_tree_dist_bar) 
 ```
 
+#Figure 3 *Option 3*. Stem density distrubtion W/O the 2.5 to 10 cm DBH size class (saplings) as staggered bar plots
 
 
-```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
-#print(sap_map)#Figure 4. Sapling (1 cm to 9.9 cm DBH) density heat maps per site for 2020-2022 visits. WP is not included. 
+```{r, echo=FALSE, out.height="100%", fig.height = 8, fig.width = 10.6}
+print(Box_den_ba)
 ```
-
-
-```{r, echo=FALSE, warning=FALSE}
-#print(Comp_tree_dist_bar) 
-```
-
-```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
-print(treesap_map)
-```
-
-Figure 4. Tree stem map and sapling heat map combined. 
-
-
-```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
-print(Box_den)
-```
-Figure 6. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the density calculated for the full plot are included. Only live trees >10cm.
-
-```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
-print(Box_BA)
-```
-Figure 7. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the basal area calculated for the full plot are included. Only live trees >10cm.
+Figure 4. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the density calculated for the full plot are included. Only live trees >10cm. A) Density; B) Basal area.
 
 ```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
 #print(Box_bio) #Figure 8. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1000 times. 1959 and the biomass calculated for the full plot are included. Only live trees >10cm.
@@ -81,55 +67,48 @@ Figure 7. Bootstrapped distribution of 2020s trees: 5 10x10m subplots iterated 1
 ## Species composition figures
 
 ```{r, echo=FALSE, fig.height= 10.6, fig.width=10.6}
-print(spComp3)
+#print(spComp3) #Figure 5. Change in tree species composition by site and developmental stage. Trees are live individuals >10 cm DBH. Saplings are live individuals >= 2.5 cm and < 10 cm DBH. Seedlings are established individuals <2.5 DBH.  In 2020s, established was defined as > 15cm tall. The 4 most abundant species per site, visit, and  developmental stage were included.
 ```
 
-Figure 5. Change in tree species composition by site and developmental stage. Trees are live individuals >10 cm DBH. Saplings are live individuals >= 2.5 cm and < 10 cm DBH. Seedlings are established individuals <2.5 DBH.  In 2020s, established was defined as > 15cm tall. The 4 most abundant species per site, visit, and  developmental stage were included.
 
-```{r, echo=FALSE, fig.height= 10.6, fig.width=10.6}
-print(pTSS)
+```{r, echo=FALSE, fig.width=10.6}
+#print(pTreeSp) #Figure 6. Overstory tree  species composition (live individuals >10 cm DBH) for each site and sampling event. *Betula* spp were pooled as one group (*Betula cordifolia, Betula alleghaniensis, Betula papyrifera*. Other uncommon species were pooled as Other conifer spp (*Thuja occidentalis, Pinus strobus*) or Other subcanopy spp (*Acer pensylvanicum, Acer spicatum, Amelanchier spp, Prunus pensylvanicum, Sorbus decora*). 
 ```
 
-Figure #. Relative percent change in species composition in trees, saplings, seedlings across all sites. Percent change is in basal area per hectare for trees and saplings and seedlings is percent change in density per square meter. All species included.
+
+```{r, echo=FALSE, fig.width=10.6}
+#print(pSapSp)#Figure 7. Sapling species composition (live individuals >= 2.5 cm and < 10 cm DBH) for each site and sampling event. *Betula* spp were pooled as one group (*Betula cordifolia, Betula alleghaniensis, Betula papyrifera*. Other uncommon species were pooled as Other conifer spp (*Thuja occidentalis, Pinus strobus*) or Other subcanopy spp (*Acer pensylvanicum, Acer spicatum, Amelanchier spp, Prunus pensylvanicum, Sorbus decora*). 
+```
+
+
+```{r, echo=FALSE, fig.width=10.6}
+#print(pSeedSp) #Figure 8. Seedling species composition for each site and sampling event. Seedlings are established individuals <2.5 DBH. In 2020s, established was defined as > 15cm tall. *Betula* spp were pooled as one group (*Betula cordifolia, Betula alleghaniensis, Betula papyrifera*. Other uncommon species were pooled as Other conifer spp (*Thuja occidentalis, Pinus strobus*) or Other subcanopy spp (*Acer pensylvanicum, Acer spicatum, Amelanchier spp, Prunus pensylvanicum, Sorbus decora*).
+```
+ 
+```{r, echo=FALSE, fig.height=10.6, fig.width=10.6}
+print(pComp) 
+```
+Figure 6. Species composition for each site and sampling event by growth stage: A) trees (live individuals >10 cm DBH); B) saplings (live individuals >= 2.5 cm and < 10 cm DBH); C) Seedlings (established individuals <2.5 DBH. In 2020s, established was defined as > 15cm tall). Deciduous species were pooled as one group (*Acer pensylvanicum, Acer rubrum, Acer spicatum, Amelanchier spp, Betula cordifolia, Betula alleghaniensis, Betula papyrifera, Prunus pensylvanicum, Sorbus decora*. Uncommon conifer species were pooled as Other conifer spp (*Thuja occidentalis, Pinus strobus*).
+ 
 
 ```{r, echo=FALSE, fig.height= 10.6, fig.width=10.6}
 print(pTSSgr)
 ```
 
-Figure #. Relative percent change in species composition in trees, saplings, seedlings across all sites. Percent change is in basal area per hectare for trees and saplings and in density per square meter for seedlings. Less common species grouped.
+Figure 9 Relative percent change in species composition in trees, saplings, seedlings across all sites. Percent change is in basal area per hectare for trees, denisty in stems per hectaire for saplings and in density per square meter for seedlings. Less common species grouped. Deciduous species were pooled as one group (*Acer pensylvanicum, Acer rubrum, Acer spicatum, Amelanchier spp, Betula cordifolia, Betula alleghaniensis, Betula papyrifera, Prunus pensylvanicum, Sorbus decora*. Uncommon conifer species were pooled as Other conifer spp (*Thuja occidentalis, Pinus strobus*).
 
-
-```{r, echo=FALSE, fig.width=10.6}
-print(pTreeSp)
-```
-Figure X. Tree species composition
-
-```{r, echo=FALSE, fig.width=10.6}
-print(pSapSp)
-```
-Figure X. Sapling species composition
-
-```{r, echo=FALSE, fig.width=10.6}
-print(pSeedSp)
-```
-Figure X. Seedling species composition
-
-##Dendro figures
+## Dendro figures
 
 ```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
-print(ageD)
+print(ageDp)
 ```
-Figure 10. Recruitment age distributions, including Davis cores.
+Figure 10. Number of trees per decade recruited (i.e. reaching breast height) per decade for seven mature red/white spruce stands in coastal Maine. Increment cores collected in 1959 were not cross-dated, so recruitment years are estimates for those cores.**Should I included PM TSCA?**
 
 ```{r, echo=FALSE, out.height="100%", fig.height = 10.6, fig.width = 10.6, warning=FALSE}
 print(DistPlotAnn2)
 ```
-Figure 9a. Disturbance chronology. Orange and blue bars are disturbance signal by type per year. Grey bars are releases binned by decade. Solid black line is a kernel density function. Dotted black line is the sample depth. Vertical dashed gray line indicates the year the sample depth falls to five cores. 
+Figure 11. Disturbance chronology for seven mature red/white spruce stands in coastal Maine. Orange and blue bars are disturbance signal by type per year. Grey bars are releases binned by decade. Solid black line is a kernel density function. Dotted black line is the sample depth (number of trees contributing do the chronology). Vertical dashed gray line indicates the year the sample depth falls to five cores. 
 
-```{r, echo=FALSE, out.height="100%", fig.height = 10.6, fig.width = 10.6, warning=FALSE}
-print(DistPlotPMPool2)
-```
-Figure 9b. Disturbance chronology. Orange and blue bars are disturbance signal by type per year. Grey bars are releases binned by decade. Solid black line is a kernel density function. Dotted black line is the sample depth. Vertical dashed gray line indicates the year the sample depth falls to five cores. *PM TSCA pooled with PM PIRU*.
 
 ## Tables
 Table 1. Location description information for the seven sites included in the study.
@@ -145,25 +124,49 @@ kable(dSites, format = 'html', align = 'c') %>%
 Table 2. Density, basal area, biomass, and carbon mass calculated for each site and sampling event. All live trees > 10cm were included. Biomass is an estimate of above ground biomass. **Should we report 2020s sample including snags?**  Plot size for 1959 sample was 500 m$^2$. Plot size in 2020-2022 was 2000 m$^2$.
 
 ```{r, echo=FALSE}
-kable(SumTable_ha6, format = 'html', align = 'c',
+kable(SumTable_ha8, format = 'html', align = 'c',
                   col.names = c("Site", "1959", "2020s", "1959", "2020s", 
-                                "1959", "2020s", "2020s", "1959", "2020s", "2020s")) %>% 
+                                "1959", "2020s", "1959", "2020s", "1959", "2020s", "2020s", "2020s")) %>% 
             kable_styling(fixed_thead = TRUE, bootstrap_options = 'condensed', 
                           full_width = FALSE, position = 'left', font_size = 12.5) %>%
-            #column_spec(c(2,4,6), color = "#74c476", border_left = TRUE) %>% 
-            #column_spec(c(3,5,7,8), color = "#006d2c") %>% 
-            add_header_above(c("", "Density (stems/ha)" = 2, "Basal area (m$^2$/ha)" = 2, 
-                               "Biomass (Mg/ha)" = 2, "Sapling (stems/ha)" = 2, "SDW Basal area (m$^2$/ha)" = 1,
-                               "DWD Vol. (m$^3$/ha)" = 1),
+            column_spec(c(2,4,6,8,10), background = "#F0F0F0") %>% 
+            #column_spec(c(3,5,7,9,11:13), background = "#31a354") %>% 
+            add_header_above(c("", "Tree den. (stems/ha)" = 2, "Tree BA (m$^2$/ha)" = 2, 
+                               "Tree biomass (Mg/ha)" = 2, "Sap. den. (stems/ha)" = 2, "Bryo./Lich. cover (%)" = 2, "Snag BA (m$^2$/ha)" = 1,
+                               "CWM Vol. (m$^3$/ha)" = 1),
                                extra_css = "border-bottom: 1px solid #000000; border-right: 3px solid #ffffff;",
                                line = FALSE) 
 ```
 
-Table 3. Increment cores collected per site and the interseries correlation coefficient after cross-dating.
+Table 3. Number of cross-dated increment cores collected per site and the number for cores used to construct the recruiment structure. The author did not include cores that were greater than 10 rings from the pith. This information was not available for Davis' cores but the common practice was to discard cores that did not strike the pith. The interseries correlation coefficient after cross-dating and subsample signal strength for the author's increment cores is included. Davis' cores were not cross-dated.
 
 ```{r, echo=FALSE}
 kable(sCores, format = 'html', align = 'c') %>% 
             kable_styling(fixed_thead = TRUE, bootstrap_options = 'condensed', 
+                          full_width = FALSE, position = 'left', font_size = 12.5) %>% 
+            add_header_above(c("","","", "","Recruitment Structure" = 2))
+             
+```
+
+Table 4. Site codes discrepancies between sampling events. *Three areas of Western Mtn were investigated by Seirup: WM, WP, and WP2. For simplicity, the site code WM was used in the text, but the plot data is from site WP2.
+
+```{r, echo=FALSE}
+kable(sCodes, format = 'html', align = 'c') %>% 
+            kable_styling(fixed_thead = TRUE, bootstrap_options = 'condensed', 
                           full_width = FALSE, position = 'left', font_size = 12.5)
              
+```
+
+### Ordinations
+
+```{r, echo=FALSE, fig.height= 8, fig.width=8, warning=FALSE}
+print(densz_mMDS_plot)
+```
+
+
+Figure XXX. Diameter distribution ordination of relative density by size class (lowest size class 2.5-9.9 cm DBH, highest 50-59.9 cm DBH)
+
+
+```{r, echo=FALSE, warning=FALSE}
+metaMDS(ord_den_sz_wide, distance="bray", k=2)
 ```
