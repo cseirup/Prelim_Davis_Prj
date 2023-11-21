@@ -35,7 +35,7 @@ Tree_layout <- ggplot(data = trees, aes(x = cY, y = cX))+
               panel.background = element_blank(),
               strip.background = element_blank(),
               axis.title.y = element_text(margin = margin(r = 5)))+
-        theme_FVM()
+        theme_FHM()
 Tree_layout
         
 ggsave("./figures/Tree_layout15.jpg", Tree_layout, dpi = 300, height = 7, width = 12)
@@ -66,10 +66,39 @@ tree_map <- ggplot(data = BM_trees, aes(x = cY, y = cX))+
         #geom_vline(xintercept = 100, linetype = 2)+
         geom_text(aes(label=Tag), size = 3)+ #add tag # labels
         coord_flip()+
-        theme_FVM()
+        theme_FHM()
 tree_map
 
-ggsave("./figures/BM_tree_map_north.jpg", tree_map, dpi = 300, height = 11, width = 3)
+
+tree_map <- ggplot(data = BM_trees, aes(x = cY, y = cX))+
+  geom_point(aes(color = Status, size = DBH))+
+  coord_equal()+# makes x and y the same scale
+  #scale_color_discrete(name = "Status", labels = c("Dead", "Live"))+
+  scale_shape_manual(values = c(17,16))+
+  scale_size_continuous(range = c(1, 6))+
+  scale_color_manual(name = "Status", labels = c("Dead", "Live"), 
+                     values = c("D" = '#808080', "L" = '#31a354'))+
+  facet_wrap(~Site, ncol = 1, labeller = as_labeller(site_names))+
+  labs(x = "Y (meters)", y = "X (meters)")+ 
+  theme(axis.text = element_text(size = 9), 
+        strip.text = element_text(size = 12), #facet wrap text size
+        axis.title = element_text(size = 12),
+        axis.text.x = element_text(angle = 45, hjust = 1),
+        axis.line = element_line(color = "#696969", size = 0.01),
+        axis.ticks = element_line(color = "#696969", size = 0.5),
+        panel.border = element_blank(),
+        panel.background = element_blank(),
+        strip.background = element_blank(),
+        axis.title.y = element_text(margin = margin(r = 5)))+
+  #geom_hline(yintercept = 5, linetype = 2)+
+  #geom_vline(xintercept = 100, linetype = 2)+
+  #geom_text(aes(label=Tag), size = 3)+ #add tag # labels
+  coord_flip()+
+  theme_FHM()
+tree_map
+
+
+ggsave("C:/01_NETN/Forest_Health/R_Dev/Prelim_Davis_Prj/BM_tree_map_north.jpg", tree_map, dpi = 400, height = 11, width = 3)
 
 
 # Spatial tree cores ------------------------------------------------------

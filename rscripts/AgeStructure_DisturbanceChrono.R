@@ -151,38 +151,38 @@ ageAll2$Site <- ordered(ageAll2$Site,
                                            "Beech Mtn", "Blackwoods", "Pemetic Mtn", 
                                            "Ironbound Island", "Western Mtn"))
 # Plot Recruitment Age ---------------------------------------------------------
-custom_breaks <- seq(1720,2010,10)
-ageD<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent))+
-  geom_bar()+
-  scale_fill_manual(name = "Year/Species Cored", labels = c("1959 *Picea glauca*", '1959 *Picea rubens*', "2020s *Picea rubens*"), 
-                    values = c("PIRU1" = '#b38e80', "PIRU2" = '#75abbd', "PIGL1"= '#b3b380'))+
-  labs(x='Recruitment Decade', y='Number of Trees')+ 
-  scale_x_binned(show.limits = TRUE, limits = c(1720, 2000), breaks = custom_breaks,
-                 labels = every_nth(custom_breaks, 4, inverse = TRUE))+ 
-  facet_wrap(~Site, ncol = 4, scales = "free")+
-  theme(axis.text.x=element_text(angle=30, hjust = 1, vjust = 1.1, size = 10), # change axis label size
-        axis.text.y = element_text(size = 10), 
-        strip.text = element_text(size = 12), # change facet text size
-        axis.title = element_text(size = 12), # change axis title size
-        axis.title.y = element_text(margin = margin(r = 5)),
-        legend.text = element_text(size = 10),
-        legend.title = element_text(size = 10),
-        legend.position = c(.95,.1),
-        legend.justification = c(1,0),
-        panel.grid.major = element_blank(), #indented from theme_FHM()
-        panel.grid.minor = element_blank(),
-        panel.background = element_rect(color = '#696969', fill = 'white', size = 0.4),
-        plot.background = element_blank(),
-        strip.background = element_rect(color = '#696969', fill = 'grey90', size = 0.4),
-        legend.key = element_blank(),
-        axis.line.x = element_line(color = "#696969", size = 0.2),
-        axis.line.y = element_line(color = "#696969", size = 0.2),
-        axis.ticks.y = element_line(color = "#696969", size = 0.7),
-        axis.ticks.x = element_line(color = "#696969", size = 0.3),
-        axis.ticks.length.x = unit(.15, "cm"))+
-  theme(legend.text = element_markdown())
-
-ageD
+# custom_breaks <- seq(1720,2010,10)
+# ageD<-ggplot(ageAll2, aes(x=r_year, fill = speciesEvent))+
+#   geom_bar()+
+#   scale_fill_manual(name = "Year/Species Cored", labels = c("1959 *Picea glauca*", '1959 *Picea rubens*', "2020s *Picea rubens*"), 
+#                     values = c("PIRU1" = '#b38e80', "PIRU2" = '#75abbd', "PIGL1"= '#b3b380'))+
+#   labs(x='Recruitment Decade', y='Number of Trees')+ 
+#   scale_x_binned(show.limits = TRUE, limits = c(1720, 2000), breaks = custom_breaks,
+#                  labels = every_nth(custom_breaks, 4, inverse = TRUE))+ 
+#   facet_wrap(~Site, ncol = 4, scales = "free")+
+#   theme(axis.text.x=element_text(angle=30, hjust = 1, vjust = 1.1, size = 10), # change axis label size
+#         axis.text.y = element_text(size = 10), 
+#         strip.text = element_text(size = 12), # change facet text size
+#         axis.title = element_text(size = 12), # change axis title size
+#         axis.title.y = element_text(margin = margin(r = 5)),
+#         legend.text = element_text(size = 10),
+#         legend.title = element_text(size = 10),
+#         legend.position = c(.95,.1),
+#         legend.justification = c(1,0),
+#         panel.grid.major = element_blank(), #indented from theme_FHM()
+#         panel.grid.minor = element_blank(),
+#         panel.background = element_rect(color = '#696969', fill = 'white', size = 0.4),
+#         plot.background = element_blank(),
+#         strip.background = element_rect(color = '#696969', fill = 'grey90', size = 0.4),
+#         legend.key = element_blank(),
+#         axis.line.x = element_line(color = "#696969", size = 0.2),
+#         axis.line.y = element_line(color = "#696969", size = 0.2),
+#         axis.ticks.y = element_line(color = "#696969", size = 0.7),
+#         axis.ticks.x = element_line(color = "#696969", size = 0.3),
+#         axis.ticks.length.x = unit(.15, "cm"))+
+#   theme(legend.text = element_markdown())
+# 
+# ageD
 
 #with pattern
 custom_breaks <- seq(1720,2010,10)
@@ -226,6 +226,8 @@ ageDp <- ggplot(ageAll2, aes(x=r_year, fill = SampleEventNum, pattern = Species)
   theme(legend.text = element_markdown())
 
 ageDp
+
+#ggsave("./figures/RecruitAge.jpg", ageDp, height = 5, width = 10, dpi = 400)
 
 # Combine and Plot Disturbance Chronology------------------------------------------------------------
 gr3 <- gr2 %>% left_join(Cores4, by = "Core_ID")
@@ -308,6 +310,50 @@ DistPlotAnn2<-ggplot()+
           legend.justification = c(1,0)) 
 
 DistPlotAnn2
+
+#ggsave("./figures/DistChrono.jpg", DistPlotAnn2, height = 5, width = 10, dpi = 400)
+
+#For presentation: Only BC and WM
+gr3_BC_WM <- gr3 %>% select(Site, year, Species, Release_type) %>% drop_na() %>% filter(Site == "Blackwoods"|Site == "Western Mtn")
+gr8_BC_WM <- gr8 %>% filter(Site == "Blackwoods"|Site == "Western Mtn")
+All_smdp2_BC_WM <- All_smdp2 %>% filter(Site == "Blackwoods"|Site == "Western Mtn")
+
+DistPlotBCWM<-ggplot()+
+  geom_histogram(binwidth = 10, fill="lightgrey", color="#e9ecef", alpha=0.9, 
+                 show.legend = FALSE, data = gr3_BC_WM, aes(x = year))+
+  geom_density(color="black", show.legend = FALSE, data = gr3_BC_WM, 
+               aes(x = year, y=10*after_stat(count)))+
+  geom_vline(linetype = 2, show.legend = FALSE, data = gr8_BC_WM, 
+             aes(xintercept = XMAX,  color = "Sample Depth = 5"))+
+  geom_line(data = All_smdp2_BC_WM, stat = "identity", linetype = 3, linewidth = .9, 
+            aes(x = year, y = sample_depth/coeff, color = "Sample Depth"))+
+  scale_colour_manual(values = c("black","darkgrey")) +
+  scale_linetype_manual(values = "dotted", "dashed")+
+  guides(colour = guide_legend(title = NULL, override.aes = list(linetype=c(3,2))))+
+  theme_bw()+
+  geom_bar(data=gr8_BC_WM, stat = 'identity', position = 'stack', show.legend = FALSE,
+           aes(fill=Release_type, x=year, y=count))+
+  labs(x='Year')+ 
+  facet_wrap(~Site, ncol = 1, scales = "free")+
+  scale_x_continuous(limits = c(1740, 2010), breaks = custom_breaks,
+                     labels = every_nth(custom_breaks, 2, inverse = TRUE))+ 
+  scale_fill_manual(values = c( "cornflowerblue","cornflowerblue"))+ 
+  scale_y_continuous(name = "No. trees showing a disturbance", 
+                     sec.axis = sec_axis(~.*coeff, name = "Sample Depth (no. cores)"))+
+  theme(axis.text.x=element_text(angle=45,hjust=1, size = 8), 
+        axis.ticks = element_line(),
+        axis.text.y = element_text(size = 8),
+        axis.title.y = element_text(size = 10),
+        axis.title.x = element_text(size = 10),
+        panel.grid.minor = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.position = c(.05,.95),
+        legend.justification = c(.05,.95)) 
+
+DistPlotBCWM
+
+#ggsave("./figures/DistChrono_BC_WM2.jpg", DistPlotBCWM, height = 5, width = 10, dpi = 400)
+
 
 # Combining Pemetic Mtn PIRU and TSCA -------------------------------------
 gr3.5 <- gr2 %>% left_join(Cores4, by = "Core_ID")

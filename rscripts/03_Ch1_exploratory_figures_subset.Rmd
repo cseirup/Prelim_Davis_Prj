@@ -1,7 +1,7 @@
 ---
 title: "Ch1 exploratory figures subset"
 author: "Camilla Seirup"
-date: "2023-11-09"
+date: "2023-11-21"
 output: html_document
 ---
 ```{r setup, include=FALSE}
@@ -97,6 +97,13 @@ print(pTSSgr)
 
 Figure 9 Relative percent change in species composition in trees, saplings, seedlings across all sites. Percent change is in basal area per hectare for trees, denisty in stems per hectaire for saplings and in density per square meter for seedlings. Less common species grouped. Deciduous species were pooled as one group (*Acer pensylvanicum, Acer rubrum, Acer spicatum, Amelanchier spp, Betula cordifolia, Betula alleghaniensis, Betula papyrifera, Prunus pensylvanicum, Sorbus decora*. Uncommon conifer species were pooled as Other conifer spp (*Thuja occidentalis, Pinus strobus*).
 
+
+```{r, echo=FALSE, fig.width=11}
+print(pTSSgr2)
+```
+
+Figure XX: for presentation
+
 ## Dendro figures
 
 ```{r, echo=FALSE, out.height="100%", fig.width = 10.6}
@@ -111,7 +118,7 @@ Figure 11. Disturbance chronology for seven mature red/white spruce stands in co
 
 
 ## Tables
-Table 1. Location description information for the seven sites included in the study.
+Table 1. Location description information for the seven sites included in the study. 
 
 ```{r, echo=FALSE}
 kable(dSites, format = 'html', align = 'c') %>% 
@@ -121,7 +128,7 @@ kable(dSites, format = 'html', align = 'c') %>%
 ```
 
 
-Table 2. Density, basal area, biomass, and carbon mass calculated for each site and sampling event. All live trees > 10cm were included. Biomass is an estimate of above ground biomass. **Should we report 2020s sample including snags?**  Plot size for 1959 sample was 500 m$^2$. Plot size in 2020-2022 was 2000 m$^2$.
+Table 2. Density, basal area, biomass, and carbon mass calculated for each site and sampling event. All live trees > 10cm were included. Biomass is an estimate of above ground biomass. Plot size for 1959 sample was 500 m$^2$. Plot size in 2020-2022 was 2000 m$^2$.
 
 ```{r, echo=FALSE}
 kable(SumTable_ha8, format = 'html', align = 'c',
@@ -157,16 +164,44 @@ kable(sCodes, format = 'html', align = 'c') %>%
              
 ```
 
-### Ordinations
+Table 5. Overstory composition of the seven mature spruce sites in coastal Maine. Values are relative basal area (%) of live trees with diameters of ≥10 cm at breast height.
 
-```{r, echo=FALSE, fig.height= 8, fig.width=8, warning=FALSE}
+```{r, echo=FALSE}
+gsub(" 0.0"," -- " , kable(tComp4, format = 'html', align = 'lccccccccccccccc',
+                  col.names = c("Species", "1959", "2020s", "1959", "2020s", 
+                                "1959", "2020s", "1959", "2020s", "1959", "2020s", 
+                                "1959", "2020s","1959", "2020s", "Mean")) %>% 
+            kable_styling(fixed_thead = TRUE, bootstrap_options = 'condensed', 
+                          full_width = FALSE, position = 'left', font_size = 12.5) %>%
+            column_spec(1, italic = TRUE) %>% 
+            column_spec(c(2,4,6,8,10,12,14), background = "#F0F0F0") %>% 
+            add_header_above(c("", "Bass Harbor Head" = 2, "Otter Point" = 2, 
+                               "Beech Mtn" = 2, "Pemetic Mtn" = 2, "Blackwoods" = 2, 
+                               "Ironbound Island" = 2, "Western Mtn" = 2, ""),
+                               extra_css = "border-bottom: 1px solid #000000; border-right: 3px solid #ffffff;",
+                               line = FALSE))
+```
+
+
+
+### Structural ordinations
+
+```{r, echo=FALSE, fig.height= 5, fig.width=7, warning=FALSE}
 print(densz_mMDS_plot)
 ```
 
 
-Figure XXX. Diameter distribution ordination of relative density by size class (lowest size class 2.5-9.9 cm DBH, highest 50-59.9 cm DBH)
+Figure XXX. Diameter distribution ordination of relative density by size class (lowest size class 2.5-9.9 cm DBH, highest 50-59.9 cm DBH). Stress = `r mMDS_densz$stress`.
+
+### Species composition ordinations: saplings included (too little data w/o saps)
+### Basal Area
 
 
-```{r, echo=FALSE, warning=FALSE}
-metaMDS(ord_den_sz_wide, distance="bray", k=2)
+
+```{r, echo=FALSE, fig.height= 5, fig.width=7, warning=FALSE}
+print(BAt6_mMDS_plot)
 ```
+
+
+Figure XXX. Species composition ordination of relative basal area (BA), species >1% relative BA included (top 6: PIRU, PIGL, TSCA, ACRU, BEPA, ABBA). Uncommon species excluded.  All individuals >= 2.5 cm included. Stress = `r mMDS_BAt6z$stress`.
+
